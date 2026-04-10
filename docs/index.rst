@@ -98,10 +98,20 @@ Two ways to define a schema
 ``fg.schema_of`` is precise: exact schema, exact stage.
 ``fg.SparkSchema`` is contractual: declare what you need upfront.
 
+Real pipeline examples
+-----------------------
+
+See how frameguard integrates into production pipeline frameworks:
+
+- :doc:`airflow` — validate at load time and at function boundaries in Airflow DAGs
+- :doc:`kedro` — annotate Kedro nodes and let the catalog wire everything
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents
 
    quickstart
    pipelines
+   airflow
+   kedro
    api/index

@@ -1,0 +1,17 @@
+raw_orders:
+  type: spark.SparkDataset
+  filepath: data/raw_orders.csv
+  file_format: csv
+  load_args:
+    header: true
+    inferSchema: true
+
+enriched_orders:
+  type: spark.SparkDataset
+  filepath: data/enriched_orders.parquet
+  file_format: parquet
+
+customer_summary:
+  type: spark.SparkDataset
+  filepath: data/customer_summary.parquet
+  file_format: parquet

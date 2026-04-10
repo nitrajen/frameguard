@@ -122,42 +122,13 @@ Choosing between the two
 Enforcement
 -----------
 
-Packages (Kedro, Airflow, any importable module)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There are two ways to add enforcement. Both accept the same ``subset`` parameter.
 
-Call ``fg.arm()`` once from your entry point, ``settings.py``, or ``__init__.py``.
-It walks the entire package and enforces every annotated function automatically.
+``@fg.enforce`` — per function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code-block:: python
-
-   # my_pipeline/settings.py  (or __init__.py)
-   import frameguard.pyspark as fg
-
-   fg.arm()   # arms every public function in the entire package
-
-Node files stay clean with no imports or decorators:
-
-.. code-block:: python
-
-   # my_pipeline/nodes.py
-   from pyspark.sql import types as T
-   import frameguard.pyspark as fg
-
-   class RawSchema(fg.SparkSchema):
-       order_id: T.LongType()
-       amount:   T.DoubleType()
-       quantity: T.IntegerType()
-
-   def enrich(df: RawSchema):   # enforced automatically by fg.arm()
-       return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
-
-   def clean(df: RawSchema):    # also enforced, no extra work
-       return df.dropDuplicates(["order_id"])
-
-Scripts and notebooks
-~~~~~~~~~~~~~~~~~~~~~
-
-Use ``@fg.enforce`` per function.
+Decorate individual functions. Use this in scripts, notebooks, and any place
+where you want explicit, visible contracts.
 
 .. code-block:: python
 
@@ -170,15 +141,134 @@ Use ``@fg.enforce`` per function.
    )
    RawSchema = fg.schema_of(raw_df)
 
-   @fg.enforce
+   @fg.enforce                    # subset=True by default
    def enrich(df: RawSchema):
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
+   @fg.enforce(subset=False)      # exact match required for this function
+   def write_final(df: RawSchema): ...
+
+``fg.arm()`` — whole package
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Call once from your pipeline entry point. It walks the entire package and
+wraps every annotated public function automatically. Use this for importable
+pipeline packages.
+
+.. code-block:: python
+
+   # my_pipeline/settings.py  (or __init__.py)
+   import frameguard.pyspark as fg
+
+   fg.arm()                 # subset=True globally (default)
+   # fg.arm(subset=False)   # exact match everywhere
+
+Node files need no decorators:
+
+.. code-block:: python
+
+   # my_pipeline/nodes.py
+   from pyspark.sql import types as T
+   import frameguard.pyspark as fg
+
+   class RawSchema(fg.SparkSchema):
+       order_id: T.LongType()
+       amount:   T.DoubleType()
+       quantity: T.IntegerType()
+
+   def enrich(df: RawSchema):   # enforced automatically
+       return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
+   def clean(df: RawSchema):    # also enforced
+       return df.dropDuplicates(["order_id"])
 
 .. warning::
 
    ``fg.arm()`` has no effect when a module is run directly as a script
-   (``python nodes.py``). It emits a warning in that case. Use ``@fg.enforce`` in
-   scripts and notebooks.
+   (``python nodes.py``). It emits a warning in that case. Use ``@fg.enforce``
+   in scripts and notebooks.
+
+The subset parameter
+--------------------
+
+``subset`` controls how strictly the DataFrame schema is checked against the
+declared type. It is a first-class parameter on both ``@fg.enforce`` and
+``fg.arm()``.
+
+**subset=True** (default): the DataFrame must have all declared columns with
+the correct types. Extra columns beyond the declaration are allowed.
+
+This is the right default for ``fg.SparkSchema``. A schema class expresses
+*what the function needs*, not *exactly what the DataFrame looks like*. An
+enriched DataFrame with 10 columns satisfies a schema that declares 3.
+
+.. code-block:: python
+
+   import frameguard.pyspark as fg
+   from pyspark.sql import SparkSession, types as T
+
+   spark = SparkSession.builder.getOrCreate()
+
+   class OrderSchema(fg.SparkSchema):
+       order_id: T.LongType()
+       amount:   T.DoubleType()
+
+   enriched_df = spark.createDataFrame(
+       [(1, 99.0, 300.0)],
+       "order_id LONG, amount DOUBLE, revenue DOUBLE",   # has extra column
+   )
+
+   @fg.enforce                     # subset=True by default
+   def process(df: OrderSchema): return df
+
+   process(enriched_df)            # passes — revenue is extra but OrderSchema only needs order_id and amount
+
+**subset=False**: the DataFrame must have *exactly* the declared columns. Any
+extra column is a contract violation.
+
+Use this when a function is the final consumer of a schema — a write node, a
+report generator, or any function where an unexpected column indicates
+something went wrong upstream.
+
+.. code-block:: python
+
+   @fg.enforce(subset=False)
+   def write_orders(df: OrderSchema): ...
+
+   process(enriched_df)            # passes — subset=True
+   write_orders(enriched_df)       # raises — revenue is not in OrderSchema
+
+**Global and function-level settings**: ``fg.arm(subset=...)`` sets the global
+default for the whole package. ``@fg.enforce(subset=...)`` overrides it for
+that specific function. Function level always wins.
+
+.. code-block:: python
+
+   import frameguard.pyspark as fg
+   from pyspark.sql import types as T
+
+   class OrderSchema(fg.SparkSchema):
+       order_id: T.LongType()
+       amount:   T.DoubleType()
+
+   fg.arm(subset=False)            # strict globally: no extra columns anywhere
+
+   @fg.enforce(subset=True)        # this function is more lenient
+   def inspect(df: OrderSchema): return df
+
+   # inspect() allows extra columns even though arm(subset=False) is set globally
+
+Note: ``fg.schema_of(df)`` types always use exact matching regardless of
+``subset``. A snapshot type represents one precise schema; the ``subset`` flag
+does not apply to it.
+
++----------------------+--------------------------------------------+------------------+
+| ``subset=True``      | All declared columns present, extras OK    | Default          |
++----------------------+--------------------------------------------+------------------+
+| ``subset=False``     | Declared columns present, no extras        | Strict mode      |
++----------------------+--------------------------------------------+------------------+
+| ``schema_of`` types  | Always exact (names and types must match)  | Snapshots only   |
++----------------------+--------------------------------------------+------------------+
 
 Multi-stage pipeline
 --------------------
