@@ -78,8 +78,11 @@ def arm(
                 try:
                     mod = importlib.import_module(mod_name)
                     _arm_module_dict(vars(mod))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    warnings.warn(
+                        f"frameguard: skipped arming module '{mod_name}': {exc}",
+                        stacklevel=2,
+                    )
         return
 
     frame = inspect.currentframe()
@@ -221,7 +224,7 @@ def _raise_schema_mismatch(
             f"{f.name}:{f.dataType.simpleString()}" for f in expected_schema.fields
         )
     else:
-        expected_str = annotation.__name__
+        expected_str = getattr(annotation, "__name__", repr(annotation))
 
     raise TypeError(
         f"Schema mismatch in {func_name}() argument '{param_name}':\n"

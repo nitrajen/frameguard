@@ -6,8 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-import sys
 import os
+import sys
+
 import tomllib
 
 sys.path.insert(0, os.path.abspath(".."))
@@ -16,7 +17,8 @@ with open(os.path.join(os.path.dirname(__file__), "..", "pyproject.toml"), "rb")
     _meta = tomllib.load(_f)["project"]
 
 project   = _meta["name"]
-author    = ", ".join(a["name"] for a in _meta.get("authors", [{"name": "frameguard contributors"}]))
+_default_authors = [{"name": "frameguard contributors"}]
+author    = ", ".join(a["name"] for a in _meta.get("authors", _default_authors))
 release   = _meta["version"]   # e.g. "0.1.0"
 version   = ".".join(release.split(".")[:2])  # e.g. "0.1"
 copyright = f"2024, {author}"

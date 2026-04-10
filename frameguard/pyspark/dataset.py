@@ -400,7 +400,12 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
     def assert_columns(self, *col_names: str) -> _TypedDatasetBase:
         missing = [c for c in col_names if c not in self.columns]
         if missing:
-            raise SchemaValidationError([f"Missing column '{c}'" for c in missing], self._history)
+            available = ", ".join(self.columns)
+            raise SchemaValidationError(
+                [f"Missing column '{c}'" for c in missing]
+                + [f"Available columns: {available}"],
+                self._history,
+            )
         return self
 
     def assert_column_type(self, col_name: str, expected_type: Any) -> _TypedDatasetBase:
