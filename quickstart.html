@@ -250,6 +250,19 @@
 </pre></div>
 </div>
 <p>Requires Python &gt;= 3.10, PySpark &gt;= 3.3.</p>
+<p>All examples on this page assume the following setup:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+</pre></div>
+</div>
 <section id="defining-a-schema-type">
 <h2>Defining a schema type<a class="headerlink" href="#defining-a-schema-type" title="Link to this heading">¶</a></h2>
 <p>There are two approaches. Choose based on whether you have a live DataFrame at
@@ -260,8 +273,9 @@ definition time.</p>
 Assign in PascalCase. It is a type, not a value.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span>
 
+<span class="c1"># raw_df and enriched_df defined in setup above</span>
 <span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>       <span class="c1"># exact: same columns, same types, nothing extra</span>
-<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>  <span class="c1"># capture again after each schema change</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>  <span class="c1"># new type after adding revenue column</span>
 </pre></div>
 </div>
 <p>The isinstance check is <strong>exact</strong>: a DataFrame with extra columns does <em>not</em>
@@ -339,6 +353,7 @@ function is enforced automatically, no per-function decoration.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/nodes.py</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">arm</span>
 
+<span class="c1"># raw_df comes from the catalog or a load step at runtime</span>
 <span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>   <span class="c1"># enforced</span>

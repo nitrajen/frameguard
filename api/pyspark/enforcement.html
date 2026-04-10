@@ -259,7 +259,14 @@ any module that gets <em>imported</em> rather than run directly). Call it once
 with a <code class="docutils literal notranslate"><span class="pre">schema_of</span></code> type or <code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code> annotation is enforced
 automatically, with no decorator on each function.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/transforms.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">arm</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 
@@ -317,7 +324,18 @@ where <code class="docutils literal notranslate"><span class="pre">arm()</span><
 <p>Only intercepts parameters annotated with a <code class="docutils literal notranslate"><span class="pre">schema_of</span></code> type or a
 <code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code> subclass. All other arguments (<code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">list</span></code>,
 custom classes) are left completely alone.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">users_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">101</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">),</span> <span class="p">(</span><span class="mi">102</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">)],</span>
+    <span class="s2">&quot;user_id LONG, name STRING&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 
@@ -326,8 +344,8 @@ custom classes) are left completely alone.</p>
     <span class="c1"># only df is checked; label and count are not touched</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
 
-<span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>   <span class="c1"># OK</span>
-<span class="n">enrich</span><span class="p">(</span><span class="n">users_df</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="c1"># raises TypeError: wrong schema on df</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>    <span class="c1"># OK</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">users_df</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># raises TypeError: wrong schema on df</span>
 </pre></div>
 </div>
 <dl class="py function">

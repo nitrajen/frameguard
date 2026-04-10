@@ -281,9 +281,17 @@ you have available and what kind of matching you need.</p>
 <h2>schema_of<a class="headerlink" href="#schema-of" title="Link to this heading">¶</a></h2>
 <p>Captures a live DataFrame’s schema as a Python type. Use it at each
 pipeline stage that changes the shape of the data.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
 
-<span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">RawSchema</span>   <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>   <span class="c1"># new type, includes revenue</span>
 
 <span class="nd">@enforce</span>

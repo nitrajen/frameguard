@@ -7,6 +7,21 @@ Quickstart
 
 Requires Python >= 3.10, PySpark >= 3.3.
 
+All examples on this page assume the following setup:
+
+.. code-block:: python
+
+   from pyspark.sql import SparkSession, functions as F
+   from pyspark.sql import types as T
+
+   spark = SparkSession.builder.getOrCreate()
+
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
+   enriched_df = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
 Defining a schema type
 -----------------------
 
@@ -23,8 +38,9 @@ Assign in PascalCase. It is a type, not a value.
 
    from frameguard.pyspark import schema_of
 
+   # raw_df and enriched_df defined in setup above
    RawSchema      = schema_of(raw_df)       # exact: same columns, same types, nothing extra
-   EnrichedSchema = schema_of(enriched_df)  # capture again after each schema change
+   EnrichedSchema = schema_of(enriched_df)  # new type after adding revenue column
 
 The isinstance check is **exact**: a DataFrame with extra columns does *not*
 satisfy ``RawSchema``. Capture a new type at each stage boundary.
@@ -100,6 +116,7 @@ function is enforced automatically, no per-function decoration.
    # my_pipeline/nodes.py
    from frameguard.pyspark import schema_of, arm
 
+   # raw_df comes from the catalog or a load step at runtime
    RawSchema = schema_of(raw_df)
 
    def enrich(df: RawSchema):   # enforced

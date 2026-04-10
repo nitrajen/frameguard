@@ -258,7 +258,14 @@ the job, serialized the query, shipped it to the executors, and then — forty
 lines of JVM stack trace to tell you a column is missing.</p>
 <p>The column was missing at the <em>call site</em>. Before Spark ran a single thing.</p>
 <p><strong>frameguard catches it there.</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema_of</span><span class="p">,</span> <span class="n">enforce</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 
@@ -290,6 +297,7 @@ everything else passes through untouched.</p>
 <section id="two-ways-to-define-a-schema">
 <h2>Two ways to define a schema<a class="headerlink" href="#two-ways-to-define-a-schema" title="Link to this heading">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Capture from a live DataFrame: exact matching, per-stage snapshot</span>
+<span class="c1"># raw_df and enriched_df are defined above</span>
 <span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
 
