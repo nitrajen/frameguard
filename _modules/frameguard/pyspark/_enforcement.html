@@ -253,7 +253,10 @@
 
 <span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
-<span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># global flag; disable() sets this to False</span>
+<span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># fg.disable() / fg.enable_enforcement()</span>
+<span class="n">_SUBSET</span>  <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># fg.arm(subset=...) — global default; function-level overrides this</span>
+
+<span class="n">_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>  <span class="c1"># sentinel: &quot;no function-level override, use global&quot;</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_schema_type</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -268,13 +271,45 @@
         <span class="k">return</span> <span class="kc">False</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">_arm_module_dict</span><span class="p">(</span><span class="n">module_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_schema_matches</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">annotation</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether *value* satisfies *annotation*.</span>
+
+<span class="sd">    For ``schema_of`` types the check is always exact (they are a snapshot).</span>
+<span class="sd">    For ``SparkSchema`` types the *subset* flag controls behaviour:</span>
+
+<span class="sd">    - ``subset=True``  — extra columns in *value* are fine.</span>
+<span class="sd">    - ``subset=False`` — *value* must have exactly the declared columns, nothing extra.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">_TypedDatasetBase</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSchema</span>
+
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">_TypedDatasetBase</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>   <span class="c1"># schema_of: always exact</span>
+
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">SparkSchema</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">subset</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>     <span class="c1"># extra columns allowed</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">errors</span> <span class="o">=</span> <span class="n">annotation</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>                  <span class="c1"># exact match required</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_arm_module_dict</span><span class="p">(</span><span class="n">module_dict</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="o">*</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Patch all public functions in a module&#39;s __dict__ with enforce().&quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">module_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
         <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
             <span class="k">continue</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">):</span>
-            <span class="n">wrapped</span> <span class="o">=</span> <span class="n">enforce</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="c1"># Pass _UNSET so each wrapped function reads _SUBSET at call-time,</span>
+            <span class="c1"># unless overridden at decoration time by the caller.</span>
+            <span class="n">wrapped</span> <span class="o">=</span> <span class="n">enforce</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subset</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">wrapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">module_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapped</span>
 
@@ -285,30 +320,34 @@
     <span class="n">module</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Enforce schema annotations for all public functions in the calling package.</span>
+<span class="sd">    Arm the entire calling package and set the global subset default.</span>
 
-<span class="sd">    Call once — typically in your entry point, ``settings.py``, or ``__init__.py``.</span>
-<span class="sd">    Every public function in every module of the package is enforced automatically::</span>
+<span class="sd">    Call once — typically in your entry point, ``settings.py``, or ``__init__.py``::</span>
 
 <span class="sd">        import frameguard.pyspark as fg</span>
-<span class="sd">        fg.arm()</span>
 
-<span class="sd">    **Specific module object** — arm one module only::</span>
+<span class="sd">        fg.arm()                # subset=True (default): extra columns are fine</span>
+<span class="sd">        fg.arm(subset=False)    # exact match: no extra columns allowed anywhere</span>
 
-<span class="sd">        import my_pipeline.nodes as nodes_mod</span>
-<span class="sd">        fg.arm(nodes_mod)</span>
+<span class="sd">    The ``subset`` value becomes the global default. Individual functions decorated</span>
+<span class="sd">    with ``@fg.enforce(subset=...)`` override it for that function only.</span>
 
-<span class="sd">    **Explicit package name** — arm a package other than the calling one::</span>
+<span class="sd">    **Specific module object**::</span>
+
+<span class="sd">        fg.arm(my_module)</span>
+
+<span class="sd">    **Explicit package name**::</span>
 
 <span class="sd">        fg.arm(package=&quot;my_pipeline.nodes&quot;)</span>
-
-<span class="sd">    Functions wrapped by ``arm()`` respect the global ``disable()`` flag but</span>
-<span class="sd">    not the ``always=True`` override (use ``@fg.enforce(always=True)`` for that).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_SUBSET</span>
+    <span class="n">_SUBSET</span> <span class="o">=</span> <span class="n">subset</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
-        <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">))</span>
+        <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">),</span> <span class="n">subset</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="k">if</span> <span class="n">package</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -327,13 +366,13 @@
         <span class="k">return</span>
 
     <span class="n">pkg</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
-    <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+    <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">pkg</span><span class="p">),</span> <span class="n">subset</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">)</span>
     <span class="n">pkg_path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;__path__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">pkg_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">mod_name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="n">package</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">mod</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">mod_name</span><span class="p">)</span>
-                <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">mod</span><span class="p">))</span>
+                <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">mod</span><span class="p">),</span> <span class="n">subset</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;frameguard: skipped arming module &#39;</span><span class="si">{</span><span class="n">mod_name</span><span class="si">}</span><span class="s2">&#39;: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
@@ -344,27 +383,16 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">disable</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Disable all frameguard schema enforcement globally.</span>
+<span class="sd">    Disable all schema enforcement globally.</span>
 
-<span class="sd">    Every ``@enforce`` wrapper and every function wrapped by ``arm()`` becomes</span>
-<span class="sd">    a pass-through. Functions decorated with ``@enforce(always=True)`` are</span>
-<span class="sd">    **not** affected — they always enforce, regardless of this flag::</span>
-
-<span class="sd">        from frameguard.pyspark import disable, enable_enforcement</span>
-
-<span class="sd">        disable()</span>
-<span class="sd">        process(wrong_df)    # no error — enforcement is off</span>
-<span class="sd">        critical(wrong_df)   # still raises — @enforce(always=True) ignores disable()</span>
-
-<span class="sd">        enable_enforcement()</span>
-<span class="sd">        process(wrong_df)    # raises again</span>
+<span class="sd">    ``@fg.enforce(always=True)`` functions are not affected.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">_ENABLED</span>
     <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">False</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">enable_enforcement</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-enable enforcement after a ``disable()`` call.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Re-enable enforcement after a ``fg.disable()`` call.&quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">_ENABLED</span>
     <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -373,7 +401,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">enforce</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span> <span class="o">...</span>
 
 <span class="nd">@overload</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">enforce</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">always</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span> <span class="o">...</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enforce</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">always</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span> <span class="o">...</span>
 
 
 <div class="viewcode-block" id="enforce">
@@ -382,32 +410,38 @@
     <span class="n">func</span><span class="p">:</span> <span class="n">F</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">always</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">subset</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">_UNSET</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Validate schema annotations on DataFrame arguments only.</span>
+<span class="sd">    Validate schema annotations on DataFrame arguments.</span>
 
-<span class="sd">    Only intercepts parameters annotated with a ``schema_of`` type or a</span>
-<span class="sd">    ``SparkSchema`` subclass. All other arguments (``str``, ``int``, ``list``,</span>
-<span class="sd">    custom classes) are left completely alone.</span>
+<span class="sd">    Only intercepts parameters annotated with a ``fg.schema_of`` type or a</span>
+<span class="sd">    ``fg.SparkSchema`` subclass. All other arguments are left completely alone.</span>
 
-<span class="sd">    **Basic usage** — respects ``disable()``::</span>
+<span class="sd">    **Default** — inherits the global ``subset`` set by ``fg.arm()``::</span>
 
-<span class="sd">        @enforce</span>
-<span class="sd">        def enrich(df: RawSchema, label: str):</span>
-<span class="sd">            return df.withColumn(&quot;revenue&quot;, F.col(&quot;amount&quot;) * F.col(&quot;quantity&quot;))</span>
+<span class="sd">        @fg.enforce</span>
+<span class="sd">        def process(df: OrderSchema, label: str): ...</span>
 
-<span class="sd">    **always=True** — enforces even after ``disable()`` is called. Use this</span>
-<span class="sd">    for functions where a schema mismatch would be genuinely dangerous, like</span>
-<span class="sd">    a function that writes to production or deletes data::</span>
+<span class="sd">    **subset=True** — extra columns in the DataFrame are fine (overrides global)::</span>
 
-<span class="sd">        @enforce(always=True)</span>
-<span class="sd">        def write_to_prod(df: FinalSchema, table: str):</span>
-<span class="sd">            df.write.saveAsTable(table)</span>
+<span class="sd">        @fg.enforce(subset=True)</span>
+<span class="sd">        def process(df: OrderSchema): ...</span>
 
-<span class="sd">        disable()            # turns off enforcement globally</span>
-<span class="sd">        enrich(wrong_df)     # passes silently</span>
-<span class="sd">        write_to_prod(wrong_df)  # still raises — always=True ignores disable()</span>
+<span class="sd">    **subset=False** — DataFrame must match the schema exactly (overrides global)::</span>
+
+<span class="sd">        @fg.enforce(subset=False)</span>
+<span class="sd">        def process(df: OrderSchema): ...</span>
+
+<span class="sd">    **always=True** — enforces even after ``fg.disable()`` is called::</span>
+
+<span class="sd">        @fg.enforce(always=True)</span>
+<span class="sd">        def write_to_prod(df: FinalSchema, table: str): ...</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Capture the function-level subset at decoration time.</span>
+    <span class="c1"># If _UNSET, the wrapper reads _SUBSET at call-time (respects fg.arm changes).</span>
+    <span class="n">subset_override</span> <span class="o">=</span> <span class="n">subset</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
         <span class="n">schema_params</span> <span class="o">=</span> <span class="p">[</span>
@@ -427,6 +461,9 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="n">_ENABLED</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">always</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+            <span class="c1"># Function-level subset wins; fall back to global if not set.</span>
+            <span class="n">effective_subset</span> <span class="o">=</span> <span class="n">_SUBSET</span> <span class="k">if</span> <span class="n">subset_override</span> <span class="ow">is</span> <span class="n">_UNSET</span> <span class="k">else</span> <span class="n">subset_override</span>
+
             <span class="n">bound</span> <span class="o">=</span> <span class="n">sig</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">bound</span><span class="o">.</span><span class="n">apply_defaults</span><span class="p">()</span>
 
@@ -434,7 +471,7 @@
                 <span class="k">if</span> <span class="n">param_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span><span class="p">:</span>
                     <span class="k">continue</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">bound</span><span class="o">.</span><span class="n">arguments</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">_schema_matches</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">effective_subset</span><span class="p">):</span>
                     <span class="n">_raise_schema_mismatch</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
