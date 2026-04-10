@@ -60,14 +60,28 @@ everything else passes through untouched.
 Two ways to define a schema
 ----------------------------
 
+**Capture from a live DataFrame** — exact matching, snapshot at each stage:
+
 .. code-block:: python
 
-   # Capture from a live DataFrame — exact matching, per-stage snapshot
-   # raw_df and enriched_df are defined above
+   import frameguard.pyspark as fg
+   from pyspark.sql import SparkSession, functions as F
+
+   spark = SparkSession.builder.getOrCreate()
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
+   enriched_df = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
    RawSchema      = fg.schema_of(raw_df)
    EnrichedSchema = fg.schema_of(enriched_df)
 
-   # Declare upfront — no live DataFrame needed
+**Declare upfront** — no DataFrame required:
+
+.. code-block:: python
+
+   import frameguard.pyspark as fg
    from pyspark.sql import types as T
 
    class OrderSchema(fg.SparkSchema):
@@ -77,8 +91,8 @@ Two ways to define a schema
    class EnrichedSchema(OrderSchema):   # inherits all parent fields
        revenue: T.DoubleType()
 
-``schema_of`` is precise: exact schema, exact stage.
-``SparkSchema`` is contractual: declare what you need, extra columns are fine.
+``fg.schema_of`` is precise: exact schema, exact stage.
+``fg.SparkSchema`` is contractual: declare what you need upfront.
 
 .. toctree::
    :maxdepth: 2
