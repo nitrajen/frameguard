@@ -80,6 +80,11 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
     _expected_schema: Any = None   # set on each subclass by schema_of()
     _source_df:       Any = None   # the original df stored on the class
 
+    @classmethod
+    def _fg_check(cls, value: Any, subset: bool) -> bool:
+        """Enforcement protocol hook — schema_of types are always exact."""
+        return isinstance(value, cls)  # exact: extra columns fail
+
     _df:      Any
     _history: SchemaHistory
     _strict:  bool

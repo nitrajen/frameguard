@@ -100,6 +100,31 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
     """
 
     @classmethod
+    def _fg_check(cls, value: Any, subset: bool) -> bool:
+        """
+        Enforcement protocol hook — called by ``@fg.enforce`` at runtime.
+
+        Any class that exposes this method participates in frameguard enforcement
+        automatically. New DataFrame backends just add this to their schema type.
+
+        - ``subset=True``  — extra columns in *value* are fine (default).
+        - ``subset=False`` — *value* must have exactly the declared columns, nothing extra.
+        """
+        if subset:
+            return isinstance(value, cls)  # extra columns fine
+        # Exact column-name set required. Use isinstance for type/value check first
+        # (avoids duplicating the type-check logic), then compare names only so
+        # nullable mismatches don't cause false failures.
+        if not isinstance(value, cls):
+            return False
+        schema = getattr(value, "schema", None)
+        if schema is None:
+            return False
+        actual_names   = {f.name for f in schema.fields}
+        declared_names = {f.name for f in cls.to_struct().fields}
+        return actual_names == declared_names
+
+    @classmethod
     def to_struct(cls) -> Any:
         """Return the ``StructType`` for this schema. Result is cached after the first call."""
         if cls._cached_struct is not None:  # type: ignore[attr-defined]

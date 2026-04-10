@@ -20,44 +20,32 @@ _UNSET = object()  # sentinel: "no function-level override, use global"
 
 
 def _is_schema_type(annotation: Any) -> bool:
-    """Return True only for frameguard schema types."""
-    if not isinstance(annotation, type):
-        return False
-    try:
-        from frameguard.pyspark.dataset import _TypedDatasetBase
-        from frameguard.pyspark.schema import SparkSchema
-        return issubclass(annotation, _TypedDatasetBase | SparkSchema)
-    except Exception:
-        return False
+    """
+    Return True when *annotation* participates in frameguard enforcement.
+
+    Any class that exposes a ``_fg_check(value, subset) -> bool`` classmethod
+    is treated as a schema type. This is the extension point: new DataFrame
+    backends (pandas, polars, …) just need to add ``_fg_check`` to their
+    schema class — no changes to enforcement code required.
+    """
+    return isinstance(annotation, type) and callable(getattr(annotation, "_fg_check", None))
 
 
 def _schema_matches(value: Any, annotation: type, subset: bool) -> bool:
     """
     Check whether *value* satisfies *annotation*.
 
-    For ``schema_of`` types the check is always exact (they are a snapshot).
-    For ``SparkSchema`` types the *subset* flag controls behaviour:
+    Delegates to ``annotation._fg_check(value, subset)`` when available.
+    The meaning of *subset* is left to each schema type:
 
-    - ``subset=True``  — extra columns in *value* are fine.
-    - ``subset=False`` — *value* must have exactly the declared columns, nothing extra.
+    - ``schema_of`` types (``_TypedDatasetBase``) ignore *subset* — always exact.
+    - ``SparkSchema`` types respect *subset*:
+        - ``True``  — extra columns in *value* are fine.
+        - ``False`` — *value* must have exactly the declared columns, nothing extra.
     """
-    try:
-        from frameguard.pyspark.dataset import _TypedDatasetBase
-        from frameguard.pyspark.schema import SparkSchema
-
-        if issubclass(annotation, _TypedDatasetBase):
-            return isinstance(value, annotation)   # schema_of: always exact
-
-        if issubclass(annotation, SparkSchema):
-            if subset:
-                return isinstance(value, annotation)     # extra columns allowed
-            else:
-                errors = annotation.validate(value, strict=True)
-                return len(errors) == 0                  # exact match required
-
-    except Exception:
-        pass
-
+    checker = getattr(annotation, "_fg_check", None)
+    if callable(checker):
+        return checker(value, subset)
     return isinstance(value, annotation)
 
 

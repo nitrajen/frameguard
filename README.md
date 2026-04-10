@@ -1,7 +1,13 @@
 # frameguard
 
-**Schema mismatches in data pipelines fail late.** A cryptic `AnalysisException` inside
-Spark, or worse, silent bad data reaching production. By then you've lost the context of
+[![PyPI](https://img.shields.io/pypi/v/frameguard)](https://pypi.org/project/frameguard/)
+[![Python](https://img.shields.io/pypi/pyversions/frameguard)](https://pypi.org/project/frameguard/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Tests](https://github.com/nitrajen/frameguard/actions/workflows/ci.yml/badge.svg)](https://github.com/nitrajen/frameguard/actions)
+[![Docs](https://img.shields.io/badge/docs-frameguard.readthedocs.io-blue)](https://frameguard.readthedocs.io)
+
+**Schema mismatches in data pipelines fail late.** A cryptic `AnalysisException` deep in
+Spark, or worse — silent bad data reaching production. By then you've lost the context of
 what went wrong and where.
 
 **frameguard catches it at the source: the function call.**
@@ -11,7 +17,6 @@ import frameguard.pyspark as fg
 from pyspark.sql import SparkSession, functions as F
 
 spark = SparkSession.builder.getOrCreate()
-
 raw_df = spark.createDataFrame(
     [(1, 10.0, 3), (2, 5.0, 7)],
     "order_id LONG, amount DOUBLE, quantity INT",
@@ -27,17 +32,17 @@ RawSchema = fg.schema_of(raw_df)
 def enrich(df: RawSchema):
     return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-enriched_df = enrich(raw_df)    # ok
-enrich(users_df)                # raises immediately: wrong schema
-enrich(enriched_df)             # raises immediately: extra columns violate the contract
+enrich(raw_df)     # ✓ passes
+enrich(users_df)   # ✗ raises immediately — wrong schema
 ```
 
-No validation logic inside the function. No waiting for Spark. The wrong DataFrame
-simply cannot enter the wrong function.
+No validation logic inside the function. No waiting for Spark to plan the job.
+The wrong DataFrame simply cannot enter the wrong function.
 
-**Zero extra dependencies.** `pip install frameguard[pyspark]` installs only PySpark,
-which you already have. The enforcement is pure Python `isinstance()` checks. Only
-your DataFrame arguments are checked; `str`, `int`, and other args are left alone.
+> **Zero extra dependencies.** `pip install frameguard[pyspark]` installs only
+> PySpark, which you already have. Enforcement is pure Python `isinstance()`.
+> Only schema-annotated arguments are touched — `str`, `int`, and all other
+> arguments pass through untouched.
 
 ---
 
@@ -47,21 +52,32 @@ your DataFrame arguments are checked; `str`, `int`, and other args are left alon
 pip install frameguard[pyspark]
 ```
 
-Requires Python >= 3.10, PySpark >= 3.3.
+Requires Python ≥ 3.10, PySpark ≥ 3.3.
 
 ---
 
 ## Two ways to define a schema
 
-**Capture from a live DataFrame** — inferred at runtime, exact matching:
+### Capture from a live DataFrame
 
 ```python
-# continuing from above
-RawSchema      = fg.schema_of(raw_df)
-EnrichedSchema = fg.schema_of(enriched_df)   # new type after adding revenue column
+import frameguard.pyspark as fg
+from pyspark.sql import SparkSession, functions as F
+
+spark = SparkSession.builder.getOrCreate()
+raw_df = spark.createDataFrame(
+    [(1, 10.0, 3)], "order_id LONG, amount DOUBLE, quantity INT"
+)
+enriched_df = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
+RawSchema      = fg.schema_of(raw_df)       # snapshot — exact match required
+EnrichedSchema = fg.schema_of(enriched_df)  # new type after adding revenue
 ```
 
-**Declare upfront** — no DataFrame required:
+The check is **exact**: a DataFrame with extra columns does *not* satisfy
+`RawSchema`. Capture a new type at each stage boundary.
+
+### Declare upfront
 
 ```python
 import frameguard.pyspark as fg
@@ -78,24 +94,27 @@ class EnrichedSchema(OrderSchema):        # inherits all parent fields
     revenue: T.DoubleType()
 ```
 
-Use `fg.SparkSchema` when you want to declare a contract upfront (Kedro nodes, shared
-schemas across a team). Use `fg.schema_of(df)` when you want to snapshot the exact schema
-at each pipeline stage.
+Use `fg.SparkSchema` when you want to declare a contract upfront — Kedro nodes,
+shared schemas across a team. By default extra columns are allowed (`subset=True`).
 
 ---
 
 ## Enforcement
 
-**In packages** (Kedro, Airflow) — call `fg.arm()` once from your entry point:
+### Packages — arm once, protect everywhere
 
 ```python
-# my_pipeline/settings.py
+# my_pipeline/settings.py  (or __init__.py)
 import frameguard.pyspark as fg
 
-fg.arm()   # walks and arms the entire package — no decorators needed in node files
+fg.arm()                # subset=True: extra columns fine (default)
+fg.arm(subset=False)    # exact match: no extra columns anywhere
 ```
 
-**In scripts and notebooks** — per-function decorator:
+`fg.arm()` walks the entire package and wraps every annotated function.
+Node files need no imports or decorators.
+
+### Scripts and notebooks — per-function
 
 ```python
 import frameguard.pyspark as fg
@@ -107,10 +126,26 @@ raw_df = spark.createDataFrame(
 )
 RawSchema = fg.schema_of(raw_df)
 
-@fg.enforce
-def enrich(df: RawSchema, label: str):   # only df is checked; label is not touched
+@fg.enforce                     # inherits global subset setting
+def enrich(df: RawSchema, label: str):   # only df is checked
     return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
+@fg.enforce(subset=False)       # exact match for this function only
+def write(df: RawSchema): ...
+
+@fg.enforce(always=True)        # enforces even after fg.disable()
+def critical(df: RawSchema): ...
 ```
+
+### Subset flag
+
+| Level | How | Default |
+|---|---|---|
+| Global | `fg.arm(subset=True/False)` | `True` |
+| Function | `@fg.enforce(subset=True/False)` | inherits global |
+
+Function-level always wins. `subset=True` means extra columns are fine.
+`subset=False` means the DataFrame must match the schema exactly — no extra columns.
 
 ---
 
@@ -136,8 +171,20 @@ print(ds.schema_history)
 # [2] drop(['tags'])         - tags
 ```
 
-When `validate()` fails the error includes the full history, so you know exactly where
-the schema diverged from what the downstream stage expected.
+When `validate()` fails, the error includes the full history — you know exactly
+where the schema diverged from what the next stage expected.
+
+---
+
+## Documentation
+
+Full docs at **[frameguard.readthedocs.io](https://frameguard.readthedocs.io)**,
+including:
+
+- [Quickstart](https://frameguard.readthedocs.io/en/latest/quickstart.html) — full walkthrough with nested structs and multi-stage pipelines
+- [Enforcement reference](https://frameguard.readthedocs.io/en/latest/api/pyspark/enforcement.html) — `arm()`, `enforce()`, `disable()`, `always`
+- [Schema utilities](https://frameguard.readthedocs.io/en/latest/api/pyspark/schemas.html) — `schema_of`, `SparkSchema`, `from_struct`, `to_code`
+- [Schema history](https://frameguard.readthedocs.io/en/latest/api/pyspark/history.html) — tracking mutations across pipeline stages
 
 ---
 
