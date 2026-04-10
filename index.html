@@ -246,18 +246,18 @@
         <article role="main" id="furo-main-content">
           <section id="frameguard">
 <h1>frameguard<a class="headerlink" href="#frameguard" title="Link to this heading">¶</a></h1>
-<p>You’ve seen this error.</p>
+<p>PySpark schema errors fail at the worst possible time. A function receives
+the wrong DataFrame, Spark plans the job, serializes the query, ships work
+to executors, and then surfaces this:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] &#39;revenue&#39; cannot be resolved.
 Did you mean one of: [order_id, amount, quantity, customer_id]?
   at org.apache.spark.sql.catalyst.analysis ...
   (47 more lines)
 </pre></div>
 </div>
-<p>You refactored a pipeline stage. Wired it up slightly wrong. Spark planned
-the job, serialized the query, shipped it to the executors, and then — forty
-lines of JVM stack trace to tell you a column is missing.</p>
-<p>The column was missing at the <em>call site</em>. Before Spark ran a single thing.</p>
-<p><strong>frameguard catches it there.</strong></p>
+<p>By then the context is gone. The mismatch happened at the call site, before
+Spark touched anything.</p>
+<p><strong>frameguard raises there instead.</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 

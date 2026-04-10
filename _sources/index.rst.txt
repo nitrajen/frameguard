@@ -1,7 +1,9 @@
 frameguard
 ==========
 
-You've seen this error.
+PySpark schema errors fail at the worst possible time. A function receives
+the wrong DataFrame, Spark plans the job, serializes the query, ships work
+to executors, and then surfaces this:
 
 .. code-block:: text
 
@@ -10,13 +12,10 @@ You've seen this error.
      at org.apache.spark.sql.catalyst.analysis ...
      (47 more lines)
 
-You refactored a pipeline stage. Wired it up slightly wrong. Spark planned
-the job, serialized the query, shipped it to the executors, and then — forty
-lines of JVM stack trace to tell you a column is missing.
+By then the context is gone. The mismatch happened at the call site, before
+Spark touched anything.
 
-The column was missing at the *call site*. Before Spark ran a single thing.
-
-**frameguard catches it there.**
+**frameguard raises there instead.**
 
 .. code-block:: python
 
