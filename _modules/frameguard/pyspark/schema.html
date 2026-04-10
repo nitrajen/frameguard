@@ -341,6 +341,31 @@
 <span class="sd">    subclass (a Python class, not a DataType instance).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fg_check</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enforcement protocol hook — called by ``@fg.enforce`` at runtime.</span>
+
+<span class="sd">        Any class that exposes this method participates in frameguard enforcement</span>
+<span class="sd">        automatically. New DataFrame backends just add this to their schema type.</span>
+
+<span class="sd">        - ``subset=True``  — extra columns in *value* are fine (default).</span>
+<span class="sd">        - ``subset=False`` — *value* must have exactly the declared columns, nothing extra.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">subset</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>  <span class="c1"># extra columns fine</span>
+        <span class="c1"># Exact column-name set required. Use isinstance for type/value check first</span>
+        <span class="c1"># (avoids duplicating the type-check logic), then compare names only so</span>
+        <span class="c1"># nullable mismatches don&#39;t cause false failures.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;schema&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">actual_names</span>   <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
+        <span class="n">declared_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">to_struct</span><span class="p">()</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">actual_names</span> <span class="o">==</span> <span class="n">declared_names</span>
+
 <div class="viewcode-block" id="SparkSchema.to_struct">
 <a class="viewcode-back" href="../../../api/pyspark/schemas.html#frameguard.pyspark.schema.SparkSchema.to_struct">[docs]</a>
     <span class="nd">@classmethod</span>

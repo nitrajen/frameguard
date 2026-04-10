@@ -322,6 +322,11 @@
     <span class="n">_expected_schema</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># set on each subclass by schema_of()</span>
     <span class="n">_source_df</span><span class="p">:</span>       <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># the original df stored on the class</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fg_check</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enforcement protocol hook — schema_of types are always exact.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>  <span class="c1"># exact: extra columns fail</span>
+
     <span class="n">_df</span><span class="p">:</span>      <span class="n">Any</span>
     <span class="n">_history</span><span class="p">:</span> <span class="n">SchemaHistory</span>
     <span class="n">_strict</span><span class="p">:</span>  <span class="nb">bool</span>

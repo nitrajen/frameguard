@@ -260,44 +260,32 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_is_schema_type</span><span class="p">(</span><span class="n">annotation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True only for frameguard schema types.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">return</span> <span class="kc">False</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">_TypedDatasetBase</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSchema</span>
-        <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">_TypedDatasetBase</span> <span class="o">|</span> <span class="n">SparkSchema</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">False</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return True when *annotation* participates in frameguard enforcement.</span>
+
+<span class="sd">    Any class that exposes a ``_fg_check(value, subset) -&gt; bool`` classmethod</span>
+<span class="sd">    is treated as a schema type. This is the extension point: new DataFrame</span>
+<span class="sd">    backends (pandas, polars, …) just need to add ``_fg_check`` to their</span>
+<span class="sd">    schema class — no changes to enforcement code required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;_fg_check&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_schema_matches</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">annotation</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check whether *value* satisfies *annotation*.</span>
 
-<span class="sd">    For ``schema_of`` types the check is always exact (they are a snapshot).</span>
-<span class="sd">    For ``SparkSchema`` types the *subset* flag controls behaviour:</span>
+<span class="sd">    Delegates to ``annotation._fg_check(value, subset)`` when available.</span>
+<span class="sd">    The meaning of *subset* is left to each schema type:</span>
 
-<span class="sd">    - ``subset=True``  — extra columns in *value* are fine.</span>
-<span class="sd">    - ``subset=False`` — *value* must have exactly the declared columns, nothing extra.</span>
+<span class="sd">    - ``schema_of`` types (``_TypedDatasetBase``) ignore *subset* — always exact.</span>
+<span class="sd">    - ``SparkSchema`` types respect *subset*:</span>
+<span class="sd">        - ``True``  — extra columns in *value* are fine.</span>
+<span class="sd">        - ``False`` — *value* must have exactly the declared columns, nothing extra.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">_TypedDatasetBase</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSchema</span>
-
-        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">_TypedDatasetBase</span><span class="p">):</span>
-            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>   <span class="c1"># schema_of: always exact</span>
-
-        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">SparkSchema</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">subset</span><span class="p">:</span>
-                <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>     <span class="c1"># extra columns allowed</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">errors</span> <span class="o">=</span> <span class="n">annotation</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>                  <span class="c1"># exact match required</span>
-
-    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-        <span class="k">pass</span>
-
+    <span class="n">checker</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;_fg_check&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">checker</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">checker</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">subset</span><span class="p">)</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>
 
 
