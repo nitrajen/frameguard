@@ -20,8 +20,8 @@ The column was missing at the *call site*. Before Spark ran a single thing.
 
 .. code-block:: python
 
+   import frameguard.pyspark as fg
    from pyspark.sql import SparkSession, functions as F
-   from frameguard.pyspark import schema_of, enforce
 
    spark = SparkSession.builder.getOrCreate()
    raw_df = spark.createDataFrame(
@@ -29,16 +29,16 @@ The column was missing at the *call site*. Before Spark ran a single thing.
        "order_id LONG, amount DOUBLE, quantity INT",
    )
 
-   RawSchema = schema_of(raw_df)
+   RawSchema = fg.schema_of(raw_df)
 
-   @enforce
+   @fg.enforce
    def enrich(df: RawSchema):
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
    enriched_df    = enrich(raw_df)
-   EnrichedSchema = schema_of(enriched_df)
+   EnrichedSchema = fg.schema_of(enriched_df)
 
-   @enforce
+   @fg.enforce
    def flag_high_value(df: EnrichedSchema):
        return df.withColumn("is_vip", F.col("revenue") > 1000)
 
@@ -62,16 +62,15 @@ Two ways to define a schema
 
 .. code-block:: python
 
-   # Capture from a live DataFrame: exact matching, per-stage snapshot
+   # Capture from a live DataFrame — exact matching, per-stage snapshot
    # raw_df and enriched_df are defined above
-   RawSchema      = schema_of(raw_df)
-   EnrichedSchema = schema_of(enriched_df)
+   RawSchema      = fg.schema_of(raw_df)
+   EnrichedSchema = fg.schema_of(enriched_df)
 
-   # Declare upfront: subset matching, no live DataFrame needed
-   from frameguard.pyspark import SparkSchema
+   # Declare upfront — no live DataFrame needed
    from pyspark.sql import types as T
 
-   class OrderSchema(SparkSchema):
+   class OrderSchema(fg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
 

@@ -45,61 +45,58 @@ def arm(
     package: str | None = None,
 ) -> None:
     """
-    Enforce schema annotations for all public functions in the target module(s).
+    Enforce schema annotations for all public functions in the calling package.
 
-    Three modes:
+    Call once — typically in your entry point, ``settings.py``, or ``__init__.py``.
+    Every public function in every module of the package is enforced automatically::
 
-    **Calling module** (default): call at the bottom of a nodes file::
+        import frameguard.pyspark as fg
+        fg.arm()
 
-        arm()
-
-    **Specific module**::
+    **Specific module object** — arm one module only::
 
         import my_pipeline.nodes as nodes_mod
-        arm(nodes_mod)
+        fg.arm(nodes_mod)
 
-    **Whole package** — recommended for Kedro and Airflow::
+    **Explicit package name** — arm a package other than the calling one::
 
-        arm(package="my_pipeline.nodes")
+        fg.arm(package="my_pipeline.nodes")
 
     Functions wrapped by ``arm()`` respect the global ``disable()`` flag but
-    not the ``always=True`` override (use ``@enforce(always=True)`` for that).
+    not the ``always=True`` override (use ``@fg.enforce(always=True)`` for that).
     """
     if isinstance(module, types.ModuleType):
         _arm_module_dict(vars(module))
         return
 
-    if package is not None:
-        pkg = importlib.import_module(package)
-        _arm_module_dict(vars(pkg))
-        pkg_path = getattr(pkg, "__path__", None)
-        if pkg_path is not None:
-            for _, mod_name, _ in pkgutil.walk_packages(pkg_path, prefix=package + "."):
-                try:
-                    mod = importlib.import_module(mod_name)
-                    _arm_module_dict(vars(mod))
-                except Exception as exc:
-                    warnings.warn(
-                        f"frameguard: skipped arming module '{mod_name}': {exc}",
-                        stacklevel=2,
-                    )
-        return
+    if package is None:
+        frame = inspect.currentframe()
+        if frame is None or frame.f_back is None:
+            return
+        caller_globals = frame.f_back.f_globals
+        package = caller_globals.get("__package__") or caller_globals.get("__name__", "")
 
-    frame = inspect.currentframe()
-    if frame is None or frame.f_back is None:
-        return
-
-    caller_globals = frame.f_back.f_globals
-    pkg_name = caller_globals.get("__package__") or caller_globals.get("__name__", "")
-
-    if not pkg_name or pkg_name == "__main__":
+    if not package or package == "__main__":
         warnings.warn(
-            "arm() called from __main__. Use @enforce on individual functions instead.",
+            "frameguard.pyspark.arm() called from __main__. "
+            "Use @frameguard.pyspark.enforce on individual functions instead.",
             stacklevel=2,
         )
         return
 
-    _arm_module_dict(caller_globals)
+    pkg = importlib.import_module(package)
+    _arm_module_dict(vars(pkg))
+    pkg_path = getattr(pkg, "__path__", None)
+    if pkg_path is not None:
+        for _, mod_name, _ in pkgutil.walk_packages(pkg_path, prefix=package + "."):
+            try:
+                mod = importlib.import_module(mod_name)
+                _arm_module_dict(vars(mod))
+            except Exception as exc:
+                warnings.warn(
+                    f"frameguard: skipped arming module '{mod_name}': {exc}",
+                    stacklevel=2,
+                )
 
 
 def disable() -> None:

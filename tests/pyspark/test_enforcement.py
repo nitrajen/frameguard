@@ -167,4 +167,4 @@ def test_arm_warns_in_main(monkeypatch):
         warnings.simplefilter("always")
         _e.arm()
         assert len(w) == 1
-        assert "enforce" in str(w[0].message).lower()
+        assert "frameguard.pyspark.arm" in str(w[0].message)

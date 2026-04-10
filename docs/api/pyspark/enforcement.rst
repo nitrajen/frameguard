@@ -9,28 +9,33 @@ Pick one. You do not need both.
 
 ----
 
-arm
----
+frameguard.pyspark.arm
+-----------------------
 
 The preferred approach for packages (Kedro nodes, Airflow operators,
 any module that gets *imported* rather than run directly). Call it once
-**after** all function definitions in the module. Every annotated function
-with a ``schema_of`` type or ``SparkSchema`` annotation is enforced
-automatically, with no decorator on each function.
+from your entry point and every annotated function in the entire package
+is enforced automatically.
 
 .. code-block:: python
 
-   # my_pipeline/transforms.py
-   from pyspark.sql import SparkSession, functions as F
-   from frameguard.pyspark import schema_of, arm
+   # my_pipeline/settings.py
+   import frameguard.pyspark as fg
 
-   spark = SparkSession.builder.getOrCreate()
-   raw_df = spark.createDataFrame(
-       [(1, 10.0, 3), (2, 5.0, 7)],
-       "order_id LONG, amount DOUBLE, quantity INT",
-   )
+   fg.arm()   # walks and arms the entire calling package
 
-   RawSchema = schema_of(raw_df)
+Node files stay clean — no imports, no decorators needed:
+
+.. code-block:: python
+
+   # my_pipeline/nodes.py
+   import frameguard.pyspark as fg
+   from pyspark.sql import functions as F, types as T
+
+   class RawSchema(fg.SparkSchema):
+       order_id: T.LongType()
+       amount:   T.DoubleType()
+       quantity: T.IntegerType()
 
    def enrich(df: RawSchema):         # enforced automatically
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
@@ -38,30 +43,26 @@ automatically, with no decorator on each function.
    def clean(df: RawSchema):          # also enforced, no extra work
        return df.dropna()
 
-   arm()   # call after all function definitions
-
-``arm()`` wraps every public function in the calling module's globals with
-``@enforce``. It has no effect and emits a warning when called from
-``__main__`` (a script run directly). Use ``@enforce`` there instead.
+``fg.arm()`` has no effect and emits a warning when called from
+``__main__`` (a script run directly). Use ``@fg.enforce`` there instead.
 
 .. autofunction:: frameguard.pyspark._enforcement.arm
 
 ----
 
-enforce
--------
+frameguard.pyspark.enforce
+---------------------------
 
-A per-function decorator for scripts and notebooks, or for any place
-where ``arm()`` cannot be used (e.g. a top-level ``__main__`` script).
+A per-function decorator for scripts and notebooks.
 
-Only intercepts parameters annotated with a ``schema_of`` type or a
-``SparkSchema`` subclass. All other arguments (``str``, ``int``, ``list``,
+Only intercepts parameters annotated with a ``fg.schema_of`` type or a
+``fg.SparkSchema`` subclass. All other arguments (``str``, ``int``, ``list``,
 custom classes) are left completely alone.
 
 .. code-block:: python
 
+   import frameguard.pyspark as fg
    from pyspark.sql import SparkSession, functions as F
-   from frameguard.pyspark import schema_of, enforce
 
    spark = SparkSession.builder.getOrCreate()
    raw_df = spark.createDataFrame(
@@ -73,9 +74,9 @@ custom classes) are left completely alone.
        "user_id LONG, name STRING",
    )
 
-   RawSchema = schema_of(raw_df)
+   RawSchema = fg.schema_of(raw_df)
 
-   @enforce
+   @fg.enforce
    def enrich(df: RawSchema, label: str, count: int):
        # only df is checked; label and count are not touched
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
