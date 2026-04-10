@@ -20,7 +20,14 @@ The column was missing at the *call site*. Before Spark ran a single thing.
 
 .. code-block:: python
 
+   from pyspark.sql import SparkSession, functions as F
    from frameguard.pyspark import schema_of, enforce
+
+   spark = SparkSession.builder.getOrCreate()
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
 
    RawSchema = schema_of(raw_df)
 
@@ -56,6 +63,7 @@ Two ways to define a schema
 .. code-block:: python
 
    # Capture from a live DataFrame: exact matching, per-stage snapshot
+   # raw_df and enriched_df are defined above
    RawSchema      = schema_of(raw_df)
    EnrichedSchema = schema_of(enriched_df)
 

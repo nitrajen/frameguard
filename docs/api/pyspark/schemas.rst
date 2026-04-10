@@ -30,9 +30,17 @@ pipeline stage that changes the shape of the data.
 
 .. code-block:: python
 
+   from pyspark.sql import SparkSession, functions as F
    from frameguard.pyspark import schema_of, enforce
 
-   RawSchema      = schema_of(raw_df)
+   spark = SparkSession.builder.getOrCreate()
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
+
+   RawSchema   = schema_of(raw_df)
+   enriched_df = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
    EnrichedSchema = schema_of(enriched_df)   # new type, includes revenue
 
    @enforce

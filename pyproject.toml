@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "frameguard"
 version = "0.1.0"
-description = "Runtime schema enforcement for PySpark DataFrames"
+description = "Runtime schema enforcement for Python DataFrames"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"

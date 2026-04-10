@@ -7,7 +7,19 @@ what went wrong and where.
 **frameguard catches it at the source: the function call.**
 
 ```python
+from pyspark.sql import SparkSession, functions as F
 from frameguard.pyspark import schema_of, enforce
+
+spark = SparkSession.builder.getOrCreate()
+
+raw_df = spark.createDataFrame(
+    [(1, 10.0, 3), (2, 5.0, 7)],
+    "order_id LONG, amount DOUBLE, quantity INT",
+)
+users_df = spark.createDataFrame(
+    [(101, "Alice"), (102, "Bob")],
+    "user_id LONG, name STRING",
+)
 
 RawSchema = schema_of(raw_df)
 
@@ -15,9 +27,9 @@ RawSchema = schema_of(raw_df)
 def enrich(df: RawSchema):
     return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-enrich(raw_df)       # ok
-enrich(users_df)     # raises immediately: wrong schema, before Spark runs anything
-enrich(enriched_df)  # raises immediately: extra columns violate the contract
+enriched_df = enrich(raw_df)    # ok
+enrich(users_df)                # raises immediately: wrong schema
+enrich(enriched_df)             # raises immediately: extra columns violate the contract
 ```
 
 No validation logic inside the function. No waiting for Spark. The wrong DataFrame
@@ -44,8 +56,9 @@ Requires Python >= 3.10, PySpark >= 3.3.
 **Capture from a live DataFrame** — exact matching, per-stage snapshot:
 
 ```python
+# continuing from above
 RawSchema      = schema_of(raw_df)
-EnrichedSchema = schema_of(enriched_df)   # new type after adding columns
+EnrichedSchema = schema_of(enriched_df)   # new type after adding revenue column
 ```
 
 **Declare upfront** — subset matching, no DataFrame required:
@@ -76,8 +89,13 @@ at each pipeline stage.
 **In scripts and notebooks** — per-function decorator:
 
 ```python
+from pyspark.sql import SparkSession, functions as F
 from frameguard.pyspark import schema_of, enforce
 
+spark = SparkSession.builder.getOrCreate()
+raw_df = spark.createDataFrame(
+    [(1, 10.0, 3)], "order_id LONG, amount DOUBLE, quantity INT"
+)
 RawSchema = schema_of(raw_df)
 
 @enforce
@@ -89,9 +107,13 @@ def enrich(df: RawSchema, label: str):   # only df is checked; label is not touc
 
 ```python
 # nodes.py
-from frameguard.pyspark import schema_of, arm
+from pyspark.sql import types as T
+from frameguard.pyspark import SparkSchema, arm
 
-RawSchema = schema_of(raw_df)
+class RawSchema(SparkSchema):
+    order_id: T.LongType()
+    amount:   T.DoubleType()
+    quantity: T.IntegerType()
 
 def enrich(df: RawSchema): ...    # enforced
 def clean(df: RawSchema):  ...    # enforced
@@ -104,14 +126,21 @@ arm()   # wraps every public function above; call after all definitions
 ## Schema history
 
 ```python
+from pyspark.sql import SparkSession, functions as F
 from frameguard.pyspark import dataset
+
+spark = SparkSession.builder.getOrCreate()
+raw_df = spark.createDataFrame(
+    [(1, 10.0, 3, ["vip"], "10001")],
+    "order_id LONG, amount DOUBLE, quantity INT, tags ARRAY<STRING>, zip STRING",
+)
 
 ds = dataset(raw_df)
 ds = ds.withColumn("revenue", F.col("amount") * F.col("quantity"))
 ds = ds.drop("tags")
 
 print(ds.schema_history)
-# [0] input                  order_id:long, amount:double, quantity:int, tags:array<string>
+# [0] input                  order_id:long, amount:double, quantity:int, tags:array<string>, zip:string
 # [1] withColumn('revenue')  + revenue:double
 # [2] drop(['tags'])         - tags
 ```
@@ -121,17 +150,6 @@ the schema diverged from what the downstream stage expected.
 
 ---
 
-## Why not Pandera or Great Expectations?
-
-Pandera and Great Expectations validate **data** (values, ranges, nulls). They run
-inside the function and require Spark to have already planned the job.
-
-frameguard enforces the **function contract**: the wrong DataFrame raises at the call site,
-before a single Spark task is planned. They solve different problems and compose well
-together: frameguard at the boundary, Pandera inside.
-
----
-
 ## License
 
-MIT
+Apache 2.0

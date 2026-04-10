@@ -21,7 +21,14 @@ automatically, with no decorator on each function.
 .. code-block:: python
 
    # my_pipeline/transforms.py
+   from pyspark.sql import SparkSession, functions as F
    from frameguard.pyspark import schema_of, arm
+
+   spark = SparkSession.builder.getOrCreate()
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
 
    RawSchema = schema_of(raw_df)
 
@@ -53,7 +60,18 @@ custom classes) are left completely alone.
 
 .. code-block:: python
 
+   from pyspark.sql import SparkSession, functions as F
    from frameguard.pyspark import schema_of, enforce
+
+   spark = SparkSession.builder.getOrCreate()
+   raw_df = spark.createDataFrame(
+       [(1, 10.0, 3), (2, 5.0, 7)],
+       "order_id LONG, amount DOUBLE, quantity INT",
+   )
+   users_df = spark.createDataFrame(
+       [(101, "Alice"), (102, "Bob")],
+       "user_id LONG, name STRING",
+   )
 
    RawSchema = schema_of(raw_df)
 
@@ -62,7 +80,7 @@ custom classes) are left completely alone.
        # only df is checked; label and count are not touched
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-   enrich(raw_df, "production", 10)   # OK
-   enrich(users_df, "production", 10) # raises TypeError: wrong schema on df
+   enrich(raw_df, "production", 10)    # OK
+   enrich(users_df, "production", 10)  # raises TypeError: wrong schema on df
 
 .. autofunction:: frameguard.pyspark._enforcement.enforce
