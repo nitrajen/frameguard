@@ -1,6 +1,0 @@
-Type Sentinels
-==============
-
-.. automodule:: dftypes.pyspark.types
-   :members:
-   :undoc-members:

@@ -1,6 +1,0 @@
-Decorators
-==========
-
-.. autofunction:: dftypes.pyspark.decorators.typed_transform
-
-.. autofunction:: dftypes.pyspark.decorators.check_schema
