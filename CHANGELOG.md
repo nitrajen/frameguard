@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/nitrajen/dfguard/compare/v0.1.0...v0.1.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* correct docs URL to GitHub Pages, fix copyright year ([8cc782b](https://github.com/nitrajen/dfguard/commit/8cc782b82f1deb5e2af1edf442da0af4e42fdfc2))
+
 ## 0.1.0 (2026-04-11)
 
 
