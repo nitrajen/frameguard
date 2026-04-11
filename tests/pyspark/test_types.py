@@ -3,9 +3,9 @@
 import pytest
 from pyspark.sql import types as T
 
-from frameguard.pyspark import Optional
-from frameguard.pyspark.schema import SparkSchema
-from frameguard.pyspark.types import annotation_to_spark
+from dfguard.pyspark import Optional
+from dfguard.pyspark.schema import SparkSchema
+from dfguard.pyspark.types import annotation_to_spark
 
 
 def test_datatype_instance():

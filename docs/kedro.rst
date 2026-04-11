@@ -1,15 +1,15 @@
-Using frameguard in Kedro
+Using dfguard in Kedro
 =========================
 
 `Kedro <https://docs.kedro.org>`_ is a pipeline framework that structures data
 projects into nodes, pipelines, and a data catalog. A node is a pure Python
 function; Kedro wires inputs and outputs through the catalog.
 
-frameguard fits naturally into Kedro. Schemas live in the node files alongside
-the functions that use them. ``fg.arm()`` in ``settings.py`` arms the entire
-package from one place, so node functions need no ``@fg.enforce`` decorator.
+dfguard fits naturally into Kedro. Schemas live in the node files alongside
+the functions that use them. ``dfg.arm()`` in ``settings.py`` arms the entire
+package from one place, so node functions need no ``@dfg.enforce`` decorator.
 
-The working example lives at ``examples/kedro/`` in the frameguard repository.
+The working example lives at ``examples/kedro/`` in the dfguard repository.
 
 File structure
 --------------
@@ -29,7 +29,7 @@ File structure
        ├── schemas.py                        # shared SparkSchema definitions
        └── pipelines/processing/
            ├── __init__.py
-           ├── nodes.py                      # node functions with @fg.enforce
+           ├── nodes.py                      # node functions, enforced by dfg.arm()
            └── pipeline.py                   # pipeline assembly
 
 schemas.py
@@ -42,10 +42,10 @@ and consumes.
 .. code-block:: python
 
    # src/orders_pipeline/schemas.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import types as T
 
-   class RawOrderSchema(fg.SparkSchema):
+   class RawOrderSchema(dfg.SparkSchema):
        order_id:    T.LongType()
        customer_id: T.LongType()
        amount:      T.DoubleType()
@@ -60,7 +60,7 @@ nodes.py
 --------
 
 Each node is a plain Python function with a schema-annotated argument.
-No ``@fg.enforce`` decorator needed; ``fg.arm()`` in ``settings.py``
+No ``@dfg.enforce`` decorator needed; ``dfg.arm()`` in ``settings.py``
 handles that for the whole package. No validation logic inside the function body.
 
 .. code-block:: python
@@ -69,7 +69,7 @@ handles that for the whole package. No validation logic inside the function body
    from pyspark.sql import functions as F
    from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
-   # No @fg.enforce needed; fg.arm() in settings.py covers the whole package.
+   # No @dfg.enforce needed; dfg.arm() in settings.py covers the whole package.
    # The type annotations on the arguments are the contract.
 
    def enrich_orders(raw: RawOrderSchema):
@@ -159,7 +159,7 @@ What a schema error looks like
 
 If the catalog wires ``raw_orders`` directly into ``summarise_by_customer``
 (missing the enrich step), Kedro propagates the node failure with the full
-frameguard message:
+dfguard message:
 
 .. code-block:: text
 
@@ -191,46 +191,42 @@ one file per domain works well:
    ├── customers.py
    └── products.py
 
-Using @fg.enforce instead of fg.arm()
---------------------------------------
+Using @dfg.enforce instead of dfg.arm()
+----------------------------------------
 
-If you prefer explicit decoration over package-wide arming, add ``@fg.enforce``
-to individual node functions instead of calling ``fg.arm()`` in ``settings.py``.
+If you prefer explicit decoration over package-wide arming, add ``@dfg.enforce``
+to individual node functions instead of calling ``dfg.arm()`` in ``settings.py``.
 Both approaches work; the choice is style:
 
 .. code-block:: python
 
    # src/orders_pipeline/hooks.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from kedro.framework.hooks import hook_impl
 
    class FrameguardHook:
        @hook_impl
        def before_pipeline_run(self, run_params, pipeline, catalog):
-           fg.arm(package="orders_pipeline.pipelines")
+           dfg.arm(package="orders_pipeline.pipelines")
 
 .. code-block:: python
 
    # src/orders_pipeline/pipelines/processing/nodes.py  (with explicit decoration)
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import functions as F
    from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
-   @fg.enforce
+   @dfg.enforce
    def enrich_orders(raw: RawOrderSchema):
        return raw.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-   @fg.enforce
+   @dfg.enforce
    def summarise_by_customer(enriched: EnrichedOrderSchema):
        return enriched.groupBy("customer_id").agg(
            F.sum("revenue").alias("total_revenue"),
            F.count("*").alias("order_count"),
        )
 
-+----------------------------------+--------------------------------------------+
-| ``fg.arm()`` in ``settings.py``  | One call, whole package covered, no        |
-|                                  | decorator on each function                 |
-+----------------------------------+--------------------------------------------+
-| ``@fg.enforce`` per function     | Explicit, visible at the function, easier  |
-|                                  | to reason about in isolation               |
-+----------------------------------+--------------------------------------------+
+``dfg.arm()`` in ``settings.py``: one call, whole package covered, no decorator on each function.
+
+``@dfg.enforce`` per function: explicit, visible at the function, easier to reason about in isolation.

@@ -2,8 +2,8 @@ Decorators
 ==========
 
 These decorators attach schema validation explicitly to a function's
-input or output, using ``fg.SparkSchema`` classes you declare upfront.
-They are an alternative to the ``@fg.enforce`` + annotation approach,
+input or output, using ``dfg.SparkSchema`` classes you declare upfront.
+They are an alternative to the ``@dfg.enforce`` + annotation approach,
 useful when you want explicit validation logic that is separate from
 the type annotation.
 
@@ -15,7 +15,7 @@ need guarding but you want to guarantee the output shape.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F, types as T
 
    spark = SparkSession.builder.getOrCreate()
@@ -24,18 +24,18 @@ need guarding but you want to guarantee the output shape.
        "order_id LONG, amount DOUBLE, quantity INT",
    )
 
-   class EnrichedSchema(fg.SparkSchema):
+   class EnrichedSchema(dfg.SparkSchema):
        order_id: T.LongType()
        revenue:  T.DoubleType()
 
-   @fg.check_schema(EnrichedSchema)
+   @dfg.check_schema(EnrichedSchema)
    def enrich(df):
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
    enrich(raw_df)   # OK: returned DataFrame has order_id and revenue
    # If revenue were missing, raises SchemaValidationError.
 
-.. autofunction:: frameguard.pyspark.decorators.check_schema
+.. autofunction:: dfguard.pyspark.decorators.check_schema
 
 ----
 
@@ -47,7 +47,7 @@ functions at critical pipeline boundaries where both sides matter.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F, types as T
 
    spark = SparkSession.builder.getOrCreate()
@@ -56,7 +56,7 @@ functions at critical pipeline boundaries where both sides matter.
        "order_id LONG, amount DOUBLE, quantity INT",
    )
 
-   class RawSchema(fg.SparkSchema):
+   class RawSchema(dfg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
        quantity: T.IntegerType()
@@ -64,7 +64,7 @@ functions at critical pipeline boundaries where both sides matter.
    class EnrichedSchema(RawSchema):
        revenue: T.DoubleType()
 
-   @fg.typed_transform(input_schema=RawSchema, output_schema=EnrichedSchema)
+   @dfg.typed_transform(input_schema=RawSchema, output_schema=EnrichedSchema)
    def enrich(df):
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
@@ -72,4 +72,4 @@ functions at critical pipeline boundaries where both sides matter.
    # Wrong input schema raises on the way in.
    # Wrong output schema raises on the way out.
 
-.. autofunction:: frameguard.pyspark.decorators.typed_transform
+.. autofunction:: dfguard.pyspark.decorators.typed_transform

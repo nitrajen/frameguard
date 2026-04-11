@@ -2,7 +2,7 @@
 
 from pyspark.sql import types as T
 
-from frameguard.pyspark.history import SchemaChange, SchemaHistory
+from dfguard.pyspark.history import SchemaChange, SchemaHistory
 
 
 def make_struct(*fields):

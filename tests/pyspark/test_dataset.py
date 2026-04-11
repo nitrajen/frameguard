@@ -7,10 +7,10 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from frameguard.pyspark import enforce, schema_of
-from frameguard.pyspark.dataset import _make_dataset as dataset
-from frameguard.pyspark.dataset import _TypedDatasetBase
-from frameguard.pyspark.exceptions import SchemaValidationError
+from dfguard.pyspark import enforce, schema_of
+from dfguard.pyspark.dataset import _make_dataset as dataset
+from dfguard.pyspark.dataset import _TypedDatasetBase
+from dfguard.pyspark.exceptions import SchemaValidationError
 
 # --- Construction ---
 

@@ -1,7 +1,7 @@
 Enforcement
 ===========
 
-frameguard enforces schema annotations at the function call site, before
+dfguard enforces schema annotations at the function call site, before
 Spark plans anything. There are two ways to enable this, depending on
 whether you are writing a package or a script.
 
@@ -9,7 +9,7 @@ Pick one. You do not need both.
 
 ----
 
-frameguard.pyspark.arm
+dfguard.pyspark.arm
 -----------------------
 
 The preferred approach for packages (Kedro nodes, Airflow operators,
@@ -20,19 +20,19 @@ is enforced automatically.
 .. code-block:: python
 
    # my_pipeline/settings.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
 
-   fg.arm()   # walks and arms the entire calling package
+   dfg.arm()   # walks and arms the entire calling package
 
 Node files stay clean with no imports or decorators needed:
 
 .. code-block:: python
 
    # my_pipeline/nodes.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import functions as F, types as T
 
-   class RawSchema(fg.SparkSchema):
+   class RawSchema(dfg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
        quantity: T.IntegerType()
@@ -43,25 +43,25 @@ Node files stay clean with no imports or decorators needed:
    def clean(df: RawSchema):          # also enforced, no extra work
        return df.dropna()
 
-``fg.arm()`` has no effect and emits a warning when called from
-``__main__`` (a script run directly). Use ``@fg.enforce`` there instead.
+``dfg.arm()`` has no effect and emits a warning when called from
+``__main__`` (a script run directly). Use ``@dfg.enforce`` there instead.
 
-.. autofunction:: frameguard.pyspark._enforcement.arm
+.. autofunction:: dfguard.pyspark._enforcement.arm
 
 ----
 
-frameguard.pyspark.enforce
+dfguard.pyspark.enforce
 ---------------------------
 
 A per-function decorator for scripts and notebooks.
 
-Only intercepts parameters annotated with a ``fg.schema_of`` type or a
-``fg.SparkSchema`` subclass. All other arguments (``str``, ``int``, ``list``,
+Only intercepts parameters annotated with a ``dfg.schema_of`` type or a
+``dfg.SparkSchema`` subclass. All other arguments (``str``, ``int``, ``list``,
 custom classes) are left completely alone.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F
 
    spark = SparkSession.builder.getOrCreate()
@@ -74,9 +74,9 @@ custom classes) are left completely alone.
        "user_id LONG, name STRING",
    )
 
-   RawSchema = fg.schema_of(raw_df)
+   RawSchema = dfg.schema_of(raw_df)
 
-   @fg.enforce
+   @dfg.enforce
    def enrich(df: RawSchema, label: str, count: int):
        # only df is checked; label and count are not touched
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
@@ -84,4 +84,4 @@ custom classes) are left completely alone.
    enrich(raw_df, "production", 10)    # OK
    enrich(users_df, "production", 10)  # raises TypeError: wrong schema on df
 
-.. autofunction:: frameguard.pyspark._enforcement.enforce
+.. autofunction:: dfguard.pyspark._enforcement.enforce

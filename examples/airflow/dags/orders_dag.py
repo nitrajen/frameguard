@@ -1,10 +1,10 @@
-"""orders_dag — daily order processing pipeline.
+"""orders_dag -- daily order processing pipeline.
 
 Each task creates its own SparkSession, reads from storage, transforms,
 and writes back. DataFrames never cross task boundaries.
 
-frameguard catches schema mismatches at the function call, before Spark
-plans or executes anything.
+dfguard catches schema mismatches at the function call, before any
+processing begins.
 """
 
 import sys
@@ -17,8 +17,8 @@ from airflow.operators.python import PythonOperator
 # Make the pipeline package importable
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-INPUT_PATH  = "/tmp/orders_data/raw_orders.parquet"
-ENRICH_PATH = "/tmp/orders_data/enriched_orders.parquet"
+INPUT_PATH   = "/tmp/orders_data/raw_orders.parquet"
+ENRICH_PATH  = "/tmp/orders_data/enriched_orders.parquet"
 SUMMARY_PATH = "/tmp/orders_data/customer_summary.parquet"
 
 
@@ -32,10 +32,10 @@ def task_enrich(**context):
 
     raw = spark.read.parquet(INPUT_PATH)
 
-    # assert_valid gives a detailed error with schema history if validation fails
+    # Validate right after loading -- catches upstream schema drift immediately
     RawOrderSchema.assert_valid(raw)
 
-    enriched = enrich(raw)      # @fg.enforce catches wrong schema here
+    enriched = enrich(raw)   # dfg.arm() guards the function call
     enriched.write.mode("overwrite").parquet(ENRICH_PATH)
     spark.stop()
 
@@ -53,7 +53,7 @@ def task_summarise(**context):
     # Catches drift: if enrich task wrote unexpected columns, fails here
     EnrichedOrderSchema.assert_valid(enriched)
 
-    summary = summarise(enriched)
+    summary = summarise(enriched)   # @dfg.enforce(subset=False) -- exact match required
     summary.write.mode("overwrite").parquet(SUMMARY_PATH)
     spark.stop()
 

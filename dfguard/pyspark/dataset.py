@@ -1,10 +1,10 @@
 """
-frameguard.pyspark.dataset: schema-as-type for PySpark DataFrames.
+dfguard.pyspark.dataset: schema-as-type for PySpark DataFrames.
 
 ``schema_of(df)`` captures a DataFrame's schema as a Python class.
 Use that class as a type annotation and beartype enforces it at every call.
 
-    from frameguard.pyspark import schema_of, enable
+    from dfguard.pyspark import schema_of, enable
     enable()
 
     RawSchema  = schema_of(raw_df)
@@ -18,7 +18,7 @@ and it integrates naturally with beartype, mypy stubs, and your own tooling.
 
 For mutation tracking use ``dataset(df)`` (aliased as ``_make_dataset``):
 
-    from frameguard.pyspark import dataset
+    from dfguard.pyspark import dataset
     ds = dataset(raw_df)
     ds = ds.withColumn("revenue", ...)
     print(ds.schema_history)
@@ -29,8 +29,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, cast
 
-from frameguard.pyspark.exceptions import SchemaValidationError
-from frameguard.pyspark.history import SchemaChange, SchemaHistory
+from dfguard.pyspark.exceptions import SchemaValidationError
+from dfguard.pyspark.history import SchemaChange, SchemaHistory
 
 # ---------------------------------------------------------------------------
 # Metaclass: enables structural isinstance checks based on schema
@@ -114,7 +114,7 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
         if not _skip_validation:
             expected = type(self)._expected_schema
             if expected is not None:
-                from frameguard.pyspark.schema import _compare_structs
+                from dfguard.pyspark.schema import _compare_structs
                 errors = _compare_structs(expected, raw.schema, strict=False, path="")
                 if errors:
                     raise SchemaValidationError(
@@ -386,7 +386,7 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
     def validate(self, schema: Any, strict: bool | None = None) -> _TypedDatasetBase:
         from pyspark.sql.types import StructType
 
-        from frameguard.pyspark.schema import _compare_structs
+        from dfguard.pyspark.schema import _compare_structs
 
         s = strict if strict is not None else self._strict
 
@@ -414,7 +414,7 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
         return self
 
     def assert_column_type(self, col_name: str, expected_type: Any) -> _TypedDatasetBase:
-        from frameguard.pyspark.types import annotation_to_spark
+        from dfguard.pyspark.types import annotation_to_spark
         field = next((f for f in self._df.schema.fields if f.name == col_name), None)
         if field is None:
             raise SchemaValidationError([f"Column '{col_name}' not found"], self._history)
@@ -456,7 +456,7 @@ class _TypedDatasetBase(metaclass=_TypedDatasetMeta):
         """
         from pyspark.sql import DataFrame as SparkDF
 
-        from frameguard.pyspark.schema import _compare_structs
+        from dfguard.pyspark.schema import _compare_structs
 
         raw = df._df if type.__instancecheck__(_TypedDatasetBase, df) else df
         if not isinstance(raw, SparkDF):
@@ -688,7 +688,7 @@ class TypedStatFunctions:
 def _struct_from_dict(col_types: dict[str, Any]) -> Any:
     from pyspark.sql.types import StructField, StructType
 
-    from frameguard.pyspark.types import annotation_to_spark
+    from dfguard.pyspark.types import annotation_to_spark
     fields = []
     for col_name, annotation in col_types.items():
         spark_type, nullable = annotation_to_spark(annotation)

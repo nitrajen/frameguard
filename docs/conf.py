@@ -17,7 +17,7 @@ with open(os.path.join(os.path.dirname(__file__), "..", "pyproject.toml"), "rb")
     _meta = tomllib.load(_f)["project"]
 
 project   = _meta["name"]
-_default_authors = [{"name": "frameguard contributors"}]
+_default_authors = [{"name": "dfguard contributors"}]
 author    = ", ".join(a["name"] for a in _meta.get("authors", _default_authors))
 release   = _meta["version"]   # e.g. "0.1.0"
 version   = ".".join(release.split(".")[:2])  # e.g. "0.1"
@@ -55,4 +55,4 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'furo'           # modern, clean, popular (used by pip, black, attrs)
 html_static_path = ['_static']
-html_title = f"frameguard {release}"
+html_title = f"dfguard {release}"

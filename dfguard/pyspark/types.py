@@ -30,7 +30,7 @@ def annotation_to_spark(annotation: Any) -> tuple[Any, bool]:
 
     from pyspark.sql import types as T
 
-    from frameguard.pyspark._nullable import _NullableAnnotation
+    from dfguard.pyspark._nullable import _NullableAnnotation
 
     # fg.Optional[X] — our nullable wrapper, works on Python 3.10+
     if isinstance(annotation, _NullableAnnotation):
@@ -69,7 +69,7 @@ def annotation_to_spark(annotation: Any) -> tuple[Any, bool]:
         return result
 
     # SparkSchema subclass → StructType (deferred import to avoid circular)
-    from frameguard.pyspark.schema import SparkSchema
+    from dfguard.pyspark.schema import SparkSchema
     if isinstance(annotation, type) and issubclass(annotation, SparkSchema):
         result = annotation.to_struct(), False
         _ANNOTATION_CACHE[annotation] = result

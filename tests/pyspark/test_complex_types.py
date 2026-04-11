@@ -1,14 +1,14 @@
 """Enforcement with ArrayType, MapType, and deeply nested column types.
 
 All matching is delegated to PySpark's own DataType.__eq__, which handles
-recursive equality for any nesting depth. These tests confirm that frameguard
+recursive equality for any nesting depth. These tests confirm that dfguard
 does not hardcode specific types and correctly handles the full type hierarchy.
 """
 
 import pytest
 from pyspark.sql import types as T
 
-from frameguard.pyspark import Optional, SparkSchema, enforce
+from dfguard.pyspark import Optional, SparkSchema, enforce
 
 # ---------------------------------------------------------------------------
 # Schema fixtures: defined once, reused across tests

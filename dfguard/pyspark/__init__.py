@@ -1,11 +1,11 @@
 """
-frameguard.pyspark: runtime schema enforcement for PySpark DataFrames.
+dfguard.pyspark: runtime schema enforcement for PySpark DataFrames.
 
 Two-line setup for packages (Kedro, Airflow, any importable module)
 -------------------------------------------------------------------
 ::
 
-    from frameguard.pyspark import schema_of, arm
+    from dfguard.pyspark import schema_of, arm
 
     RawSchema = schema_of(raw_df)
 
@@ -16,7 +16,7 @@ Two-line setup for packages (Kedro, Airflow, any importable module)
 
 For scripts and notebooks use ``@enforce`` per function::
 
-    from frameguard.pyspark import schema_of, enforce
+    from dfguard.pyspark import schema_of, enforce
 
     RawSchema = schema_of(raw_df)
 
@@ -28,7 +28,7 @@ Declaring schemas upfront (no live DataFrame required)
 ::
 
     from pyspark.sql import types as T
-    from frameguard.pyspark import SparkSchema, Optional, enforce
+    from dfguard.pyspark import SparkSchema, Optional, enforce
 
     class OrderSchema(SparkSchema):
         order_id: T.LongType()
@@ -53,6 +53,9 @@ Public API
     Apply schema enforcement to every annotated function in the calling
     module.  Call after all function definitions.
 
+``disarm()``
+    Turn off all enforcement globally. Call ``arm()`` to re-enable.
+
 ``enforce``
     Per-function decorator.  Only checks schema-annotated args.
 
@@ -68,33 +71,32 @@ try:
     import pyspark  # noqa: F401
 except ImportError as _e:
     raise ImportError(
-        "frameguard's PySpark integration requires PySpark. "
-        "Install it with: pip install 'frameguard[pyspark]'"
+        "dfguard's PySpark integration requires PySpark. "
+        "Install it with: pip install 'dfguard[pyspark]'"
     ) from _e
 
-from frameguard.pyspark._enforcement import arm, disable, enable_enforcement, enforce
-from frameguard.pyspark._inference import infer_schema
-from frameguard.pyspark._nullable import Optional
-from frameguard.pyspark.coercion import result_type
-from frameguard.pyspark.dataset import TypedGroupedData, _TypedDatasetBase, schema_of
-from frameguard.pyspark.dataset import _make_dataset as dataset
-from frameguard.pyspark.decorators import check_schema, typed_transform
-from frameguard.pyspark.exceptions import (
+from dfguard.pyspark._enforcement import arm, disarm, enforce
+from dfguard.pyspark._inference import infer_schema
+from dfguard.pyspark._nullable import Optional
+from dfguard.pyspark.coercion import result_type
+from dfguard.pyspark.dataset import TypedGroupedData, _TypedDatasetBase, schema_of
+from dfguard.pyspark.dataset import _make_dataset as dataset
+from dfguard.pyspark.decorators import check_schema, typed_transform
+from dfguard.pyspark.exceptions import (
     ColumnNotFoundError,
     DfTypesError,
     SchemaValidationError,
     TypeAnnotationError,
 )
-from frameguard.pyspark.history import SchemaChange, SchemaHistory
-from frameguard.pyspark.schema import SparkSchema  # noqa: E402
+from dfguard.pyspark.history import SchemaChange, SchemaHistory
+from dfguard.pyspark.schema import SparkSchema  # noqa: E402
 
 __all__ = [
     "schema_of",
     "dataset",
     "enforce",
     "arm",
-    "disable",
-    "enable_enforcement",
+    "disarm",
     "_TypedDatasetBase",
     "TypedGroupedData",
     "SparkSchema",

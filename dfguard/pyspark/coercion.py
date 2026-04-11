@@ -2,7 +2,7 @@
 Type coercion rules for PySpark, implemented in pure Python.
 
 This mirrors Spark's Catalyst TypeCoercion and DecimalPrecision rules so that
-frameguard can resolve derived column types without a running Spark session.
+dfguard can resolve derived column types without a running Spark session.
 
 Rules source: org.apache.spark.sql.catalyst.analysis.TypeCoercion
               org.apache.spark.sql.catalyst.analysis.DecimalPrecision

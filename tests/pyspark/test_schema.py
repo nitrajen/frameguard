@@ -3,8 +3,8 @@
 import pytest
 from pyspark.sql import types as T
 
-from frameguard.pyspark import Optional, SparkSchema, enforce
-from frameguard.pyspark.exceptions import TypeAnnotationError
+from dfguard.pyspark import Optional, SparkSchema, enforce
+from dfguard.pyspark.exceptions import TypeAnnotationError
 
 
 class AddressSchema(SparkSchema):
@@ -91,8 +91,8 @@ def test_validate_strict_rejects_extra(spark):
         OrderSchema.to_struct().fields + [T.StructField("extra", T.StringType())]
     )
     df = spark.createDataFrame([], extra)
-    assert OrderSchema.validate(df, strict=True) != []
-    assert OrderSchema.validate(df, strict=False) == []
+    assert OrderSchema.validate(df, subset=False) != []
+    assert OrderSchema.validate(df, subset=True) == []
 
 
 # --- isinstance via SparkSchema annotation ---

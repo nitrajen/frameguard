@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from frameguard.pyspark.exceptions import SchemaValidationError, TypeAnnotationError
-from frameguard.pyspark.types import annotation_to_spark, spark_type_to_str
+from dfguard.pyspark.exceptions import SchemaValidationError, TypeAnnotationError
+from dfguard.pyspark.types import annotation_to_spark, spark_type_to_str
 
 
 class _SchemaError:
@@ -73,7 +73,7 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
 
         from pyspark.sql import types as T
         from typing import Optional
-        from frameguard.pyspark import SparkSchema, enforce
+        from dfguard.pyspark import SparkSchema, enforce
 
         class OrderSchema(SparkSchema):
             order_id: T.LongType()
@@ -104,7 +104,7 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
         """
         Enforcement protocol hook called by ``@fg.enforce`` at runtime.
 
-        Any class that exposes this method participates in frameguard enforcement
+        Any class that exposes this method participates in dfguard enforcement
         automatically. New DataFrame backends just add this to their schema type.
 
         - ``subset=True``: extra columns in *value* are fine (default).
@@ -173,17 +173,18 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
     def validate(
         cls,
         df_or_schema: Any,
-        strict: bool = False,
+        subset: bool = True,
     ) -> list[_SchemaError]:
         """
         Compare a DataFrame or StructType against this schema.
 
         Returns a list of errors; an empty list means the schema is valid.
-        When ``strict=True``, extra columns beyond the declared schema are also errors.
+        When ``subset=True`` (default), extra columns beyond the declared schema are fine.
+        When ``subset=False``, extra columns are also reported as errors.
         """
         from pyspark.sql import DataFrame as SparkDF
 
-        from frameguard.pyspark.dataset import _TypedDatasetBase
+        from dfguard.pyspark.dataset import _TypedDatasetBase
 
         if isinstance(df_or_schema, _TypedDatasetBase):
             actual_struct = df_or_schema.schema
@@ -191,19 +192,19 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
             actual_struct = df_or_schema.schema
         else:
             actual_struct = df_or_schema
-        return _compare_structs(cls.to_struct(), actual_struct, strict=strict, path="")
+        return _compare_structs(cls.to_struct(), actual_struct, strict=not subset, path="")
 
     @classmethod
     def assert_valid(
         cls,
         df_or_schema: Any,
-        strict: bool = False,
+        subset: bool = True,
         history: Any = None,
     ) -> None:
         """Like ``validate`` but raises ``SchemaValidationError`` on the first failure."""
-        from frameguard.pyspark.history import SchemaHistory
+        from dfguard.pyspark.history import SchemaHistory
 
-        errors = cls.validate(df_or_schema, strict=strict)
+        errors = cls.validate(df_or_schema, subset=subset)
         if errors:
             h = history or SchemaHistory.initial(
                 df_or_schema.schema if hasattr(df_or_schema, "schema") else df_or_schema
@@ -213,7 +214,7 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
     @classmethod
     def empty(cls, spark: Any) -> Any:
         """Return an empty typed dataset instance with this schema and zero rows."""
-        from frameguard.pyspark.dataset import _make_dataset
+        from dfguard.pyspark.dataset import _make_dataset
 
         return _make_dataset(spark.createDataFrame([], cls.to_struct()))
 
@@ -357,8 +358,8 @@ def _struct_field_to_annotation(
     parent_name: str,
     nested_classes: dict[str, type[SparkSchema]],
 ) -> Any:
-    """Convert a StructField to a frameguard annotation, wrapping with fg.Optional if nullable."""
-    from frameguard.pyspark._nullable import _NullableAnnotation
+    """Convert a StructField to a dfguard annotation, wrapping with fg.Optional if nullable."""
+    from dfguard.pyspark._nullable import _NullableAnnotation
 
     annotation = _spark_type_to_annotation(field.dataType, parent_name, nested_classes)
     return _NullableAnnotation(annotation) if field.nullable else annotation

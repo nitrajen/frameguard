@@ -1,20 +1,17 @@
-"""Pure transformation functions — each decorated with @fg.enforce.
+"""Pure transformation functions for the orders pipeline.
 
-In Airflow, DAG tasks receive paths and config as arguments, create a
-SparkSession internally, do the work, and write results. DataFrames never
-cross task boundaries (they're too large for XCom).
-
-These helpers are what each task calls internally. @fg.enforce catches
-schema problems at the call site, before any Spark execution begins.
+dfg.arm() in __init__.py covers this entire package -- no @dfg.enforce
+decorator needed on most functions. @dfg.enforce(subset=False) is used
+where an exact schema match is required, such as before writing to storage.
 """
 
-import frameguard.pyspark as fg
+import dfguard.pyspark as dfg
 from pyspark.sql import DataFrame, functions as F
 
 from pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
 
-@fg.enforce
+# Covered by dfg.arm() -- no decorator needed
 def enrich(raw: RawOrderSchema) -> DataFrame:
     """Add revenue and flag high-value orders."""
     return (
@@ -24,7 +21,8 @@ def enrich(raw: RawOrderSchema) -> DataFrame:
     )
 
 
-@fg.enforce
+# subset=False: the summary written to storage must match SummarySchema exactly
+@dfg.enforce(subset=False)
 def summarise(enriched: EnrichedOrderSchema) -> DataFrame:
     """Aggregate revenue and order count per customer."""
     return (

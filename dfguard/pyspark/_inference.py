@@ -1,5 +1,5 @@
 """
-frameguard.pyspark._inference
+dfguard.pyspark._inference
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ``infer_schema(df)``: inspect a live DataFrame and generate a SparkSchema
 subclass with the correct types, including deeply nested structs.
@@ -37,7 +37,7 @@ def infer_schema(df: Any, name: str = "InferredSchema") -> type:
     type[SparkSchema]
         A fully usable SparkSchema subclass.
     """
-    from frameguard.pyspark.schema import SparkSchema
+    from dfguard.pyspark.schema import SparkSchema
 
     struct = df.schema
     schema_class = SparkSchema.from_struct(struct, name=name)
@@ -52,7 +52,7 @@ def _render_code(schema_class: Any, name: str) -> str:
     nested_lines: list[str] = []
 
     # Collect any nested SparkSchema classes stored as class attributes
-    from frameguard.pyspark.schema import SparkSchema
+    from dfguard.pyspark.schema import SparkSchema
     for attr_name, attr_val in vars(schema_class).items():
         if (
             isinstance(attr_val, type)
@@ -69,7 +69,7 @@ def _render_code(schema_class: Any, name: str) -> str:
     if not schema_class._schema_fields:
         lines.append("    pass")
     else:
-        from frameguard.pyspark.schema import _annotation_to_str
+        from dfguard.pyspark.schema import _annotation_to_str
         for col_name, annotation in schema_class._schema_fields.items():
             ann_str = _annotation_to_str(annotation)
             lines.append(f"    {col_name}: {ann_str}")

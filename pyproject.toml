@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "frameguard"
+name = "dfguard"
 version = "0.1.0"
 description = "Runtime schema enforcement for Python DataFrames"
 readme = "README.md"
@@ -16,7 +16,7 @@ dependencies = []
 pyspark = ["pyspark>=3.3.0"]
 pandas  = ["pandas>=1.5.0"]
 polars  = ["polars>=0.20.0"]
-all     = ["frameguard[pyspark,pandas,polars]"]
+all     = ["dfguard[pyspark,pandas,polars]"]
 dev     = [
     "pytest>=7.0",
     "pytest-cov",
@@ -26,14 +26,14 @@ dev     = [
 ]
 
 [project.urls]
-Homepage   = "https://github.com/nitrajen/frameguard"
-Repository = "https://github.com/nitrajen/frameguard"
+Homepage   = "https://github.com/nitrajen/dfguard"
+Repository = "https://github.com/nitrajen/dfguard"
 
 [tool.hatch.build.targets.wheel]
-packages = ["frameguard"]
+packages = ["dfguard"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"frameguard/py.typed" = "frameguard/py.typed"
+"dfguard/py.typed" = "dfguard/py.typed"
 
 [tool.ruff]
 line-length = 100
@@ -44,7 +44,7 @@ select = ["E", "F", "I", "UP"]
 # UP007/UP045 (Optional[X] -> X | None) are suppressed where PySpark DataType instances
 # are used as annotations: DataType doesn't implement __or__, so Optional[X] is required.
 [tool.ruff.lint.per-file-ignores]
-"frameguard/pyspark/schema.py" = ["UP007", "UP045"]
+"dfguard/pyspark/schema.py" = ["UP007", "UP045"]
 "tests/**/*.py"                = ["UP007", "UP045"]
 
 [tool.mypy]

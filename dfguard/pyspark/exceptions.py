@@ -1,7 +1,7 @@
 """
-frameguard.pyspark.exceptions
+dfguard.pyspark.exceptions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-All exceptions raised by the frameguard PySpark backend.
+All exceptions raised by the dfguard PySpark backend.
 Every exception carries the full schema history so the caller can trace
 exactly where the schema diverged from expectations.
 """
@@ -11,11 +11,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from frameguard.pyspark.history import SchemaHistory
+    from dfguard.pyspark.history import SchemaHistory
 
 
 class DfTypesError(Exception):
-    """Base class for all frameguard errors."""
+    """Base class for all dfguard errors."""
 
 
 class SchemaValidationError(DfTypesError):

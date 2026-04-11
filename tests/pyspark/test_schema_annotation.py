@@ -7,7 +7,7 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from frameguard.pyspark import SparkSchema, enforce, schema_of
+from dfguard.pyspark import SparkSchema, enforce, schema_of
 
 
 class RawSchema(SparkSchema):

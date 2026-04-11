@@ -16,8 +16,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install ruff mypy
-      - run: ruff check frameguard/ tests/
-      - run: mypy frameguard/ --ignore-missing-imports
+      - run: ruff check dfguard/ tests/
+      - run: mypy dfguard/ --ignore-missing-imports
 
   test:
     needs: lint
@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -e ".[pyspark,dev]"
-      - run: pytest tests/pyspark/ -q --tb=short --cov=frameguard --cov-report=xml
+      - run: pytest tests/pyspark/ -q --tb=short --cov=dfguard --cov-report=xml
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'

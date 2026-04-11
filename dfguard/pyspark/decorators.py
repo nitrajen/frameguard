@@ -7,7 +7,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, TypeVar
 
 if TYPE_CHECKING:
-    from frameguard.pyspark.schema import SparkSchema
+    from dfguard.pyspark.schema import SparkSchema
 
 F = TypeVar("F", bound=Callable[..., Any])
 
@@ -34,7 +34,7 @@ def typed_transform(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             from pyspark.sql import DataFrame as SparkDF
 
-            from frameguard.pyspark.dataset import _make_dataset, _TypedDatasetBase
+            from dfguard.pyspark.dataset import _make_dataset, _TypedDatasetBase
 
             # _is_instance: True only for real _TypedDatasetBase objects (not plain SparkDFs)
             def _is_instance(x: Any) -> bool:

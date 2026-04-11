@@ -41,7 +41,7 @@ class _NullableAnnotation:
 #:
 #: Usage::
 #:
-#:     from frameguard.pyspark import Optional
+#:     from dfguard.pyspark import Optional
 #:
 #:     class OrderSchema(fg.SparkSchema):
 #:         order_id: T.LongType()

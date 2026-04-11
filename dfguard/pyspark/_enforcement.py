@@ -13,15 +13,16 @@ from typing import Any, TypeVar, overload
 
 F = TypeVar("F", bound=Callable[..., Any])
 
-_ENABLED = True   # fg.disable() / fg.enable_enforcement()
-_SUBSET  = True   # fg.arm(subset=...) sets the global default; function-level overrides this
+_ENABLED = True   # dfg.disarm() / dfg.arm() controls this
+_ARMED   = False  # tracks whether arm() has been called
+_SUBSET  = True   # dfg.arm(subset=...) sets the global default; function-level overrides this
 
 _UNSET = object()  # sentinel: "no function-level override, use global"
 
 
 def _is_schema_type(annotation: Any) -> bool:
     """
-    Return True when *annotation* participates in frameguard enforcement.
+    Return True when *annotation* participates in dfguard enforcement.
 
     Any class that exposes a ``_fg_check(value, subset) -> bool`` classmethod
     is treated as a schema type. This is the extension point: new DataFrame
@@ -73,24 +74,34 @@ def arm(
 
     Call once from your entry point, ``__init__.py``, or ``settings.py`` (Kedro)::
 
-        import frameguard.pyspark as fg
+        import dfguard.pyspark as dfg
 
-        fg.arm()                # subset=True (default): extra columns are fine
-        fg.arm(subset=False)    # exact match: no extra columns allowed anywhere
+        dfg.arm()                # subset=True (default): extra columns are fine
+        dfg.arm(subset=False)    # exact match: no extra columns allowed anywhere
 
     The ``subset`` value becomes the global default. Individual functions decorated
-    with ``@fg.enforce(subset=...)`` override it for that function only.
+    with ``@dfg.enforce(subset=...)`` override it for that function only.
+
+    If called when already armed, re-enables enforcement (sets ``_ENABLED = True``)
+    without re-walking the package.
 
     **Specific module object**::
 
-        fg.arm(my_module)
+        dfg.arm(my_module)
 
     **Explicit package name**::
 
-        fg.arm(package="my_pipeline.nodes")
+        dfg.arm(package="my_pipeline.nodes")
     """
-    global _SUBSET
+    global _SUBSET, _ENABLED, _ARMED
     _SUBSET = subset
+    _ENABLED = True
+
+    if _ARMED:
+        # Already armed: just re-enable and update subset, no re-walking needed.
+        return
+
+    _ARMED = True
 
     if isinstance(module, types.ModuleType):
         _arm_module_dict(vars(module), subset=_UNSET)
@@ -105,8 +116,8 @@ def arm(
 
     if not package or package == "__main__":
         warnings.warn(
-            "frameguard.pyspark.arm() called from __main__. "
-            "Use @frameguard.pyspark.enforce on individual functions instead.",
+            "dfguard.pyspark.arm() called from __main__. "
+            "Use @dfguard.pyspark.enforce on individual functions instead.",
             stacklevel=2,
         )
         return
@@ -121,68 +132,52 @@ def arm(
                 _arm_module_dict(vars(mod), subset=_UNSET)
             except Exception as exc:
                 warnings.warn(
-                    f"frameguard: skipped arming module '{mod_name}': {exc}",
+                    f"dfguard: skipped arming module '{mod_name}': {exc}",
                     stacklevel=2,
                 )
 
 
-def disable() -> None:
-    """
-    Disable all schema enforcement globally.
-
-    ``@fg.enforce(always=True)`` functions are not affected.
-    """
+def disarm() -> None:
+    """Turn off all enforcement globally. Call arm() to re-enable."""
     global _ENABLED
     _ENABLED = False
-
-
-def enable_enforcement() -> None:
-    """Re-enable enforcement after a ``fg.disable()`` call."""
-    global _ENABLED
-    _ENABLED = True
 
 
 @overload
 def enforce(func: F) -> F: ...
 
 @overload
-def enforce(func: None = None, *, always: bool = ..., subset: bool = ...) -> Callable[[F], F]: ...
+def enforce(func: None = None, *, subset: bool = ...) -> Callable[[F], F]: ...
 
 
 def enforce(
     func: F | None = None,
     *,
-    always: bool = False,
     subset: Any = _UNSET,
 ) -> F | Callable[[F], F]:
     """
     Validate schema annotations on DataFrame arguments.
 
-    Only intercepts parameters annotated with a ``fg.schema_of`` type or a
-    ``fg.SparkSchema`` subclass. All other arguments are left completely alone.
+    Only intercepts parameters annotated with a ``dfg.schema_of`` type or a
+    ``dfg.SparkSchema`` subclass. All other arguments are left completely alone.
 
-    **Default**: inherits the global ``subset`` set by ``fg.arm()``:
+    **Default**: inherits the global ``subset`` set by ``dfg.arm()``:
 
-        @fg.enforce
+        @dfg.enforce
         def process(df: OrderSchema, label: str): ...
 
     **subset=True**: extra columns in the DataFrame are fine (overrides global)::
 
-        @fg.enforce(subset=True)
+        @dfg.enforce(subset=True)
         def process(df: OrderSchema): ...
 
     **subset=False**: DataFrame must match the schema exactly (overrides global)::
 
-        @fg.enforce(subset=False)
+        @dfg.enforce(subset=False)
         def process(df: OrderSchema): ...
-
-    **always=True**: enforces even after ``fg.disable()`` is called::
-
-        @fg.enforce(always=True)
-        def write_to_prod(df: FinalSchema, table: str): ...
     """
     # Capture the function-level subset at decoration time.
-    # If _UNSET, the wrapper reads _SUBSET at call-time (respects fg.arm changes).
+    # If _UNSET, the wrapper reads _SUBSET at call-time (respects dfg.arm changes).
     subset_override = subset
 
     def decorator(f: F) -> F:
@@ -201,7 +196,7 @@ def enforce(
 
         @functools.wraps(f)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            if not _ENABLED and not always:
+            if not _ENABLED:
                 return f(*args, **kwargs)
 
             # Function-level subset wins; fall back to global if not set.

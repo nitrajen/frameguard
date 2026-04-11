@@ -1,4 +1,4 @@
-Using frameguard in Airflow
+Using dfguard in Airflow
 ===========================
 
 In Airflow, each task is a Python callable. Tasks receive file paths and
@@ -6,14 +6,14 @@ configuration, create their own SparkSession, do the work, and write results
 back to storage. DataFrames never cross task boundaries; they are too large
 for XCom.
 
-This means ``@fg.enforce`` on the *task function itself* gives you little:
+This means ``@dfg.enforce`` on the *task function itself* gives you little:
 the arguments are strings and integers, not DataFrames. The useful pattern is:
 
-- ``@fg.enforce`` on the transformation helpers the task calls internally
+- ``@dfg.enforce`` on the transformation helpers the task calls internally
 - ``Schema.assert_valid(df)`` right after loading from storage, to catch
   schema drift from upstream before processing starts
 
-The working example lives at ``examples/airflow/`` in the frameguard repository.
+The working example lives at ``examples/airflow/`` in the dfguard repository.
 
 File structure
 --------------
@@ -23,11 +23,28 @@ File structure
    airflow/
    ├── requirements.txt
    ├── pipeline/
-   │   ├── __init__.py
+   │   ├── __init__.py     # arms enforcement globally
    │   ├── schemas.py      # SparkSchema definitions
-   │   └── transforms.py   # transformation helpers with @fg.enforce
+   │   └── transforms.py   # transformation helpers
    └── dags/
        └── orders_dag.py   # DAG and task callables
+
+pipeline/__init__.py
+--------------------
+
+Arm once here. Every function in the package with a schema annotation is
+enforced automatically -- no decorator needed on each one.
+
+.. code-block:: python
+
+   # pipeline/__init__.py
+   import dfguard.pyspark as dfg
+
+   dfg.arm()
+   # dfg.arm(subset=False)  # strict: no extra columns anywhere in the package
+
+   # To disable enforcement globally (e.g. in tests or non-prod environments):
+   # dfg.disarm()
 
 schemas.py
 ----------
@@ -37,10 +54,10 @@ Define schema contracts once, shared by all tasks.
 .. code-block:: python
 
    # pipeline/schemas.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import types as T
 
-   class RawOrderSchema(fg.SparkSchema):
+   class RawOrderSchema(dfg.SparkSchema):
        order_id:    T.LongType()
        customer_id: T.LongType()
        amount:      T.DoubleType()
@@ -51,7 +68,7 @@ Define schema contracts once, shared by all tasks.
        revenue:       T.DoubleType()
        is_high_value: T.BooleanType()
 
-   class SummarySchema(fg.SparkSchema):
+   class SummarySchema(dfg.SparkSchema):
        customer_id:   T.LongType()
        total_revenue: T.DoubleType()
        order_count:   T.LongType()
@@ -59,17 +76,18 @@ Define schema contracts once, shared by all tasks.
 transforms.py
 -------------
 
-Pure transformation functions. Each is annotated with ``@fg.enforce`` so that
-the wrong DataFrame cannot be passed in regardless of which task calls them.
+Pure transformation functions. ``dfg.arm()`` in ``__init__.py`` covers them
+all. ``@dfg.enforce(subset=False)`` is added where an exact schema is required
+-- no extra columns allowed, useful before writing to a fixed-schema sink.
 
 .. code-block:: python
 
    # pipeline/transforms.py
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import DataFrame, functions as F
-   from pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
+   from pipeline.schemas import EnrichedOrderSchema, RawOrderSchema, SummarySchema
 
-   @fg.enforce
+   # Covered by dfg.arm() -- no decorator needed
    def enrich(raw: RawOrderSchema) -> DataFrame:
        return (
            raw
@@ -77,7 +95,8 @@ the wrong DataFrame cannot be passed in regardless of which task calls them.
            .withColumn("is_high_value", F.col("revenue") > 500.0)
        )
 
-   @fg.enforce
+   # subset=False: the summary written to storage must match SummarySchema exactly
+   @dfg.enforce(subset=False)
    def summarise(enriched: EnrichedOrderSchema) -> DataFrame:
        return (
            enriched
@@ -119,7 +138,7 @@ stops its own SparkSession.
        raw = spark.read.parquet(INPUT_PATH)
        RawOrderSchema.assert_valid(raw)   # fail fast if upstream schema changed
 
-       enriched = enrich(raw)             # @fg.enforce guards the function
+       enriched = enrich(raw)             # @dfg.enforce guards the function
        enriched.write.mode("overwrite").parquet(ENRICH_PATH)
        spark.stop()
 
@@ -173,22 +192,22 @@ data, it fails at the function call:
      received: order_id:bigint, customer_id:bigint, amount:double,
                quantity:int, status:string
 
-The error is raised before Spark plans a single task. The message tells you
-which function, which argument, what was expected, and what was actually passed.
+The error is raised at the function call. The message tells you which function,
+which argument, what was expected, and what was actually passed.
 
 If upstream data changes shape and ``assert_valid`` catches it:
 
 .. code-block:: text
 
    SchemaValidationError: Schema validation failed:
-     Column 'revenue': missing
+     ✗ Missing column 'revenue' (expected double, nullable=False)
 
 ``assert_valid`` reports all missing and mismatched fields in one message,
 not just the first one it finds.
 
 .. tip::
 
-   Use ``@fg.enforce`` on every transformation helper. Use
+   Use ``@dfg.enforce`` on every transformation helper. Use
    ``Schema.assert_valid(df)`` at the start of every task that reads from
    storage. Together they give you two layers: one at the storage boundary
    (schema drift from upstream), one at the function boundary (wrong data

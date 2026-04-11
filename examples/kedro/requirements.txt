@@ -1,4 +1,4 @@
 kedro>=1.3
 kedro-datasets[spark]>=3.0
-frameguard[pyspark]
+dfguard[pyspark]
 pyspark>=3.3

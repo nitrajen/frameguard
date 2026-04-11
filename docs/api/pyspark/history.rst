@@ -1,13 +1,13 @@
 Schema History
 ==============
 
-When you use ``fg.dataset(df)``, every schema-changing operation is
+When you use ``dfg.dataset(df)``, every schema-changing operation is
 recorded. ``schema_history`` gives you the full chain of transforms
 that produced the current DataFrame.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F
 
    spark = SparkSession.builder.getOrCreate()
@@ -16,7 +16,7 @@ that produced the current DataFrame.
        "order_id LONG, amount DOUBLE, quantity INT, tags ARRAY<STRING>",
    )
 
-   ds = fg.dataset(raw_df)
+   ds = dfg.dataset(raw_df)
    ds = ds.withColumn("revenue", F.col("amount") * F.col("quantity"))
    ds = ds.drop("tags")
 
@@ -29,10 +29,10 @@ that produced the current DataFrame.
 When ``validate()`` raises a ``SchemaValidationError``, the exception
 includes the full history so you know which step broke the contract.
 
-.. autoclass:: frameguard.pyspark.history.SchemaHistory
+.. autoclass:: dfguard.pyspark.history.SchemaHistory
    :members:
    :undoc-members:
 
-.. autoclass:: frameguard.pyspark.history.SchemaChange
+.. autoclass:: dfguard.pyspark.history.SchemaChange
    :members:
    :undoc-members:

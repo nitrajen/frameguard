@@ -4,8 +4,8 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from frameguard.pyspark import SparkSchema, check_schema, typed_transform
-from frameguard.pyspark.exceptions import SchemaValidationError
+from dfguard.pyspark import SparkSchema, check_schema, typed_transform
+from dfguard.pyspark.exceptions import SchemaValidationError
 
 
 class InputSchema(SparkSchema):

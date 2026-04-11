@@ -1,15 +1,15 @@
 """
-Tests for frameguard.pyspark.coercion: pure-Python type coercion rules.
+Tests for dfguard.pyspark.coercion: pure-Python type coercion rules.
 
 Each test verifies our result_type() against what Spark's Catalyst actually
-produces, confirming frameguard can resolve derived column types without Spark.
+produces, confirming dfguard can resolve derived column types without Spark.
 """
 
 import pytest
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from frameguard.pyspark.coercion import result_type
+from dfguard.pyspark.coercion import result_type
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -48,7 +48,7 @@ def spark_result(spark, left_field, right_field, op_expr):
 def test_add_matches_spark(spark, left, right, expected):
     ours   = result_type(left, right, "+")
     theirs = spark_result(spark, left, right, F.col("a") + F.col("b"))
-    assert ours == expected,  f"frameguard: {ours}"
+    assert ours == expected,  f"dfguard: {ours}"
     assert ours == theirs,    f"Spark disagrees: {theirs}"
 
 
@@ -84,7 +84,7 @@ def test_sub_matches_spark(spark, left, right, expected):
 def test_mul_matches_spark(spark, left, right, expected):
     ours   = result_type(left, right, "*")
     theirs = spark_result(spark, left, right, F.col("a") * F.col("b"))
-    assert ours == expected,  f"frameguard: {ours}"
+    assert ours == expected,  f"dfguard: {ours}"
     assert ours == theirs,    f"Spark disagrees: {theirs}"
 
 

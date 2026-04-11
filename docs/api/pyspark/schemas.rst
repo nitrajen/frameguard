@@ -9,8 +9,8 @@ you have a live DataFrame at definition time.
    :widths: 25 37 38
 
    * -
-     - ``fg.schema_of(df)``
-     - ``fg.SparkSchema``
+     - ``dfg.schema_of(df)``
+     - ``dfg.SparkSchema``
    * - **Defined by**
      - Inferred from a live DataFrame
      - Declared upfront in code
@@ -22,15 +22,15 @@ you have a live DataFrame at definition time.
      - Shared contracts, Kedro nodes, team APIs
 
 
-fg.schema_of
-------------
+dfg.schema_of
+-------------
 
 Captures a live DataFrame's schema as a Python type. Use it at each
 pipeline stage that changes the shape of the data.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F
 
    spark = SparkSession.builder.getOrCreate()
@@ -39,38 +39,38 @@ pipeline stage that changes the shape of the data.
        "order_id LONG, amount DOUBLE, quantity INT",
    )
 
-   RawSchema      = fg.schema_of(raw_df)
+   RawSchema      = dfg.schema_of(raw_df)
    enriched_df    = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
-   EnrichedSchema = fg.schema_of(enriched_df)   # new type, includes revenue
+   EnrichedSchema = dfg.schema_of(enriched_df)   # new type, includes revenue
 
-   @fg.enforce
+   @dfg.enforce
    def enrich(df: RawSchema) -> EnrichedSchema:
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
    enrich(raw_df)        # OK
    enrich(enriched_df)   # raises: enriched_df has extra columns
 
-``fg.schema_of`` does **exact matching**: same columns, same types, nothing extra.
+``dfg.schema_of`` does **exact matching**: same columns, same types, nothing extra.
 Capture a new type at each stage that changes the schema::
 
-   RawSchema      = fg.schema_of(raw_df)        # order_id, amount, quantity
-   EnrichedSchema = fg.schema_of(enriched_df)   # order_id, amount, quantity, revenue
+   RawSchema      = dfg.schema_of(raw_df)        # order_id, amount, quantity
+   EnrichedSchema = dfg.schema_of(enriched_df)   # order_id, amount, quantity, revenue
 
-.. autofunction:: frameguard.pyspark.dataset.schema_of
+.. autofunction:: dfguard.pyspark.dataset.schema_of
 
 
-fg.SparkSchema
---------------
+dfg.SparkSchema
+---------------
 
 Declare a schema as a class using real PySpark types. No live DataFrame needed.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
-   from frameguard.pyspark import Optional
+   import dfguard.pyspark as dfg
+   from dfguard.pyspark import Optional
    from pyspark.sql import types as T
 
-   class OrderSchema(fg.SparkSchema):
+   class OrderSchema(dfg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
        quantity: T.IntegerType()
@@ -79,12 +79,12 @@ Declare a schema as a class using real PySpark types. No live DataFrame needed.
    class EnrichedSchema(OrderSchema):       # inherits all OrderSchema fields
        revenue: T.DoubleType()
 
-   @fg.enforce
+   @dfg.enforce
    def process(df: OrderSchema): ...
 
    # A DataFrame with only order_id, amount, quantity, zip passes.
    # A DataFrame missing order_id raises immediately.
 
-.. autoclass:: frameguard.pyspark.schema.SparkSchema
+.. autoclass:: dfguard.pyspark.schema.SparkSchema
    :members: to_struct, validate, assert_valid, empty, from_struct, to_code, diff
    :member-order: bysource

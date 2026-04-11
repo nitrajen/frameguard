@@ -1,13 +1,13 @@
 Dataset
 =======
 
-``fg.dataset(df)`` wraps a plain DataFrame in a tracked instance. Every
+``dfg.dataset(df)`` wraps a plain DataFrame in a tracked instance. Every
 transform is recorded in ``schema_history``, so when validation fails
 you can see exactly where the schema diverged.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F
 
    spark = SparkSession.builder.getOrCreate()
@@ -16,7 +16,7 @@ you can see exactly where the schema diverged.
        "order_id LONG, amount DOUBLE, quantity INT, tags ARRAY<STRING>, zip STRING",
    )
 
-   ds = fg.dataset(raw_df)
+   ds = dfg.dataset(raw_df)
    ds = ds.withColumn("revenue", F.col("amount") * F.col("quantity"))
    ds = ds.drop("tags")
 
@@ -33,7 +33,7 @@ Validate against a schema at any point:
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
+   import dfguard.pyspark as dfg
    from pyspark.sql import SparkSession, functions as F, types as T
 
    spark = SparkSession.builder.getOrCreate()
@@ -42,21 +42,21 @@ Validate against a schema at any point:
        "order_id LONG, amount DOUBLE, quantity INT",
    )
 
-   class OrderSchema(fg.SparkSchema):
+   class OrderSchema(dfg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
 
-   ds = fg.dataset(raw_df)
+   ds = dfg.dataset(raw_df)
    ds = ds.withColumn("revenue", F.col("amount") * F.col("quantity"))
    ds.validate(OrderSchema)   # raises SchemaValidationError if columns are missing
 
 When ``validate`` fails, the error message includes the full history so
 you can see which step introduced the mismatch.
 
-.. autoclass:: frameguard.pyspark.dataset._TypedDatasetBase
+.. autoclass:: dfguard.pyspark.dataset._TypedDatasetBase
    :members: validate, schema_history
    :member-order: bysource
 
-.. autoclass:: frameguard.pyspark.dataset.TypedGroupedData
+.. autoclass:: dfguard.pyspark.dataset.TypedGroupedData
    :members:
    :undoc-members:

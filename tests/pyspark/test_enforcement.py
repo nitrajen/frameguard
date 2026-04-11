@@ -1,4 +1,4 @@
-"""enforce() decorator: subset, disable/enable, always, arm()."""
+"""enforce() decorator: subset, disarm/arm, arm()."""
 
 import inspect
 import warnings
@@ -6,9 +6,9 @@ import warnings
 import pytest
 from pyspark.sql import types as T
 
-import frameguard.pyspark._enforcement as _e
-from frameguard.pyspark import SparkSchema, enforce
-from frameguard.pyspark._enforcement import disable, enable_enforcement
+import dfguard.pyspark._enforcement as _e
+from dfguard.pyspark import SparkSchema, enforce
+from dfguard.pyspark._enforcement import disarm
 
 
 class RawSchema(SparkSchema):
@@ -23,10 +23,10 @@ class EnrichedSchema(RawSchema):
 @pytest.fixture(autouse=True)
 def reset_state():
     """Reset global enforcement state before and after each test."""
-    enable_enforcement()
+    _e._ENABLED = True
     _e._SUBSET = True
     yield
-    enable_enforcement()
+    _e._ENABLED = True
     _e._SUBSET = True
 
 
@@ -92,7 +92,7 @@ def test_subset_false_rejects_missing_columns(raw_df):
 # ── global subset via _SUBSET, function-level overrides ──────────────────────
 
 def test_global_subset_false_rejects_extra_columns(enriched_df):
-    _e._SUBSET = False  # simulate fg.arm(subset=False)
+    _e._SUBSET = False  # simulate dfg.arm(subset=False)
 
     @enforce          # no explicit subset: inherits global
     def process(df: RawSchema): return df
@@ -135,52 +135,26 @@ def test_no_schema_params_returns_original_function():
     assert enforce(plain) is plain
 
 
-# ── disable() / enable_enforcement() ─────────────────────────────────────────
+# ── disarm() / arm() (re-enable) ─────────────────────────────────────────────
 
-def test_disable_silences_enforcement(raw_df):
+def test_disarm_silences_enforcement(raw_df):
     @enforce
     def process(df: EnrichedSchema): return df
 
-    disable()
-    process(raw_df)  # would raise without disable()
+    disarm()
+    process(raw_df)  # would raise without disarm()
 
 
-def test_enable_restores_enforcement(raw_df):
+def test_arm_restores_enforcement(raw_df):
     @enforce
     def process(df: EnrichedSchema): return df
 
-    disable()
+    disarm()
     process(raw_df)
-    enable_enforcement()
+    _e._ENABLED = True  # re-enable manually (arm() would re-walk, use flag directly)
 
     with pytest.raises(TypeError, match="Schema mismatch"):
         process(raw_df)
-
-
-# ── enforce(always=True) ──────────────────────────────────────────────────────
-
-def test_always_true_enforces_when_globally_disabled(raw_df):
-    @enforce(always=True)
-    def critical(df: EnrichedSchema): return df
-
-    disable()
-
-    with pytest.raises(TypeError, match="Schema mismatch"):
-        critical(raw_df)
-
-
-def test_always_true_does_not_affect_other_functions(raw_df):
-    @enforce
-    def normal(df: EnrichedSchema): return df
-
-    @enforce(always=True)
-    def critical(df: EnrichedSchema): return df
-
-    disable()
-    normal(raw_df)  # no raise
-
-    with pytest.raises(TypeError):
-        critical(raw_df)
 
 
 # ── arm() warns in __main__ ───────────────────────────────────────────────────
@@ -195,9 +169,11 @@ def test_arm_warns_in_main(monkeypatch):
         f_back = FakeInnerFrame()
 
     monkeypatch.setattr(inspect, "currentframe", lambda: FakeOuterFrame())
+    # Reset _ARMED so arm() attempts to walk
+    _e._ARMED = False
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         _e.arm()
         assert len(w) == 1
-        assert "frameguard.pyspark.arm" in str(w[0].message)
+        assert "dfguard.pyspark.arm" in str(w[0].message)

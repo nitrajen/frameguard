@@ -1,21 +1,17 @@
-"""Pipeline nodes — each function is a pure transformation.
+"""Pipeline node functions -- pure transformations.
 
-frameguard enforces schema contracts at the function boundary.
-No validation logic inside the functions themselves.
+dfg.arm() in orders_pipeline/__init__.py covers this entire package.
+Schema contracts are enforced automatically from the type annotations.
+No @dfg.enforce decorator needed on each function.
 """
 
-import frameguard.pyspark as fg
+import dfguard.pyspark as dfg
 from pyspark.sql import functions as F
 from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
 
-@fg.enforce
 def enrich_orders(raw: RawOrderSchema):
-    """Add revenue and flag high-value orders.
-
-    Accepts any DataFrame that satisfies RawOrderSchema (subset=True by default).
-    Fails immediately if required columns are missing or have wrong types.
-    """
+    """Add revenue and flag high-value orders."""
     return (
         raw
         .withColumn("revenue", F.col("amount") * F.col("quantity"))
@@ -23,13 +19,10 @@ def enrich_orders(raw: RawOrderSchema):
     )
 
 
-@fg.enforce
+# subset=False: output written to catalog must match exactly, no extra columns
+@dfg.enforce(subset=False)
 def summarise_by_customer(enriched: EnrichedOrderSchema):
-    """Aggregate per customer.
-
-    Requires all EnrichedOrderSchema columns. Fails if revenue or is_high_value
-    are missing — catching the case where the wrong stage output is passed in.
-    """
+    """Aggregate per customer."""
     return (
         enriched
         .groupBy("customer_id")

@@ -3,7 +3,7 @@
 import pytest
 from pyspark.sql import types as T
 
-from frameguard.pyspark import Optional, SparkSchema, dataset
+from dfguard.pyspark import Optional, SparkSchema, dataset
 
 
 @pytest.fixture(scope="session")
@@ -12,7 +12,7 @@ def spark():
     session = (
         SparkSession.builder
         .master("local[2]")
-        .appName("frameguard-tests")
+        .appName("dfguard-tests")
         .config("spark.ui.enabled", "false")
         .config("spark.sql.shuffle.partitions", "2")
         .getOrCreate()

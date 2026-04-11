@@ -8,7 +8,7 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from frameguard.pyspark import dataset, enforce, schema_of
+from dfguard.pyspark import dataset, enforce, schema_of
 
 ADDRESS = T.StructType([
     T.StructField("street", T.StringType(), nullable=True),
