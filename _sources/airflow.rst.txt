@@ -3,7 +3,7 @@ Using frameguard in Airflow
 
 In Airflow, each task is a Python callable. Tasks receive file paths and
 configuration, create their own SparkSession, do the work, and write results
-back to storage. DataFrames never cross task boundaries — they are too large
+back to storage. DataFrames never cross task boundaries; they are too large
 for XCom.
 
 This means ``@fg.enforce`` on the *task function itself* gives you little:
@@ -60,7 +60,7 @@ transforms.py
 -------------
 
 Pure transformation functions. Each is annotated with ``@fg.enforce`` so that
-the wrong DataFrame cannot be passed in — regardless of which task calls them.
+the wrong DataFrame cannot be passed in regardless of which task calls them.
 
 .. code-block:: python
 
@@ -92,7 +92,7 @@ orders_dag.py
 -------------
 
 Each task validates the DataFrame immediately after loading, then calls the
-appropriate transform. Tasks are completely independent — each creates and
+appropriate transform. Tasks are completely independent; each creates and
 stops its own SparkSession.
 
 .. code-block:: python

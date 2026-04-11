@@ -7,6 +7,11 @@ Quickstart
 
 Requires Python >= 3.10, PySpark >= 3.3.
 
+.. note::
+
+   frameguard currently supports **PySpark**. Support for additional DataFrame
+   libraries (pandas, polars, and others) is planned.
+
 All examples on this page assume the following setup:
 
 .. code-block:: python
@@ -124,7 +129,7 @@ Enforcement
 
 There are two ways to add enforcement. Both accept the same ``subset`` parameter.
 
-``@fg.enforce`` — per function
+``@fg.enforce`` per function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Decorate individual functions. Use this in scripts, notebooks, and any place
@@ -148,22 +153,20 @@ where you want explicit, visible contracts.
    @fg.enforce(subset=False)      # exact match required for this function
    def write_final(df: RawSchema): ...
 
-``fg.arm()`` — whole package
+``fg.arm()`` whole package
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Call once from your pipeline entry point. It walks the entire package and
-wraps every annotated public function automatically. Use this for importable
-pipeline packages.
+Call once from your package ``__init__.py`` or entry point. It walks the entire
+package and wraps every annotated public function automatically. Node functions
+need no ``@fg.enforce`` decorator; the annotation on the argument is enough.
 
 .. code-block:: python
 
-   # my_pipeline/settings.py  (or __init__.py)
+   # my_pipeline/__init__.py
    import frameguard.pyspark as fg
 
    fg.arm()                 # subset=True globally (default)
    # fg.arm(subset=False)   # exact match everywhere
-
-Node files need no decorators:
 
 .. code-block:: python
 
@@ -176,7 +179,7 @@ Node files need no decorators:
        amount:   T.DoubleType()
        quantity: T.IntegerType()
 
-   def enrich(df: RawSchema):   # enforced automatically
+   def enrich(df: RawSchema):   # enforced by fg.arm(), no decorator needed
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
    def clean(df: RawSchema):    # also enforced
@@ -188,19 +191,15 @@ Node files need no decorators:
    (``python nodes.py``). It emits a warning in that case. Use ``@fg.enforce``
    in scripts and notebooks.
 
+For pipeline framework integration see :doc:`kedro` and :doc:`airflow`.
+
 The subset parameter
 --------------------
 
-``subset`` controls how strictly the DataFrame schema is checked against the
-declared type. It is a first-class parameter on both ``@fg.enforce`` and
-``fg.arm()``.
+``subset`` is available on both ``@fg.enforce`` and ``fg.arm()``. Default is ``True``.
 
-**subset=True** (default): the DataFrame must have all declared columns with
-the correct types. Extra columns beyond the declaration are allowed.
-
-This is the right default for ``fg.SparkSchema``. A schema class expresses
-*what the function needs*, not *exactly what the DataFrame looks like*. An
-enriched DataFrame with 10 columns satisfies a schema that declares 3.
+- **subset=True**: all declared columns must be present with correct types; extra columns are fine.
+- **subset=False**: declared columns must be present and no extras are allowed.
 
 .. code-block:: python
 
@@ -213,62 +212,52 @@ enriched DataFrame with 10 columns satisfies a schema that declares 3.
        order_id: T.LongType()
        amount:   T.DoubleType()
 
+   # enriched_df has an extra 'revenue' column
    enriched_df = spark.createDataFrame(
        [(1, 99.0, 300.0)],
-       "order_id LONG, amount DOUBLE, revenue DOUBLE",   # has extra column
+       "order_id LONG, amount DOUBLE, revenue DOUBLE",
    )
 
-   @fg.enforce                     # subset=True by default
+   @fg.enforce(subset=True)        # default: extra columns are fine
    def process(df: OrderSchema): return df
 
-   process(enriched_df)            # passes — revenue is extra but OrderSchema only needs order_id and amount
+   @fg.enforce(subset=False)       # strict: no extra columns allowed
+   def write_orders(df: OrderSchema): return df
 
-**subset=False**: the DataFrame must have *exactly* the declared columns. Any
-extra column is a contract violation.
+   process(enriched_df)            # passes
+   write_orders(enriched_df)       # raises: 'revenue' is not in OrderSchema
+   # TypeError: Schema mismatch in write_orders() argument 'df':
+   #   expected: order_id:bigint, amount:double
+   #   received: order_id:bigint, amount:double, revenue:double
 
-Use this when a function is the final consumer of a schema — a write node, a
-report generator, or any function where an unexpected column indicates
-something went wrong upstream.
+**Global default via fg.arm(), per-function override via @fg.enforce()**
 
-.. code-block:: python
-
-   @fg.enforce(subset=False)
-   def write_orders(df: OrderSchema): ...
-
-   process(enriched_df)            # passes — subset=True
-   write_orders(enriched_df)       # raises — revenue is not in OrderSchema
-
-**Global and function-level settings**: ``fg.arm(subset=...)`` sets the global
-default for the whole package. ``@fg.enforce(subset=...)`` overrides it for
-that specific function. Function level always wins.
+``fg.arm(subset=...)`` sets the global default. ``@fg.enforce(subset=...)`` overrides
+it for that function only. Function level always wins.
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
-   from pyspark.sql import types as T
+   fg.arm(subset=False)            # global: strict everywhere
 
-   class OrderSchema(fg.SparkSchema):
-       order_id: T.LongType()
-       amount:   T.DoubleType()
+   @fg.enforce                     # inherits global subset=False
+   def write_orders(df: OrderSchema): return df
 
-   fg.arm(subset=False)            # strict globally: no extra columns anywhere
-
-   @fg.enforce(subset=True)        # this function is more lenient
+   @fg.enforce(subset=True)        # overrides global for this function only
    def inspect(df: OrderSchema): return df
 
-   # inspect() allows extra columns even though arm(subset=False) is set globally
+   write_orders(enriched_df)       # raises: global subset=False applies
+   inspect(enriched_df)            # passes: function-level subset=True wins
 
-Note: ``fg.schema_of(df)`` types always use exact matching regardless of
-``subset``. A snapshot type represents one precise schema; the ``subset`` flag
-does not apply to it.
+``fg.schema_of(df)`` types always use exact matching regardless of ``subset``.
+A snapshot is a snapshot.
 
-+----------------------+--------------------------------------------+------------------+
-| ``subset=True``      | All declared columns present, extras OK    | Default          |
-+----------------------+--------------------------------------------+------------------+
-| ``subset=False``     | Declared columns present, no extras        | Strict mode      |
-+----------------------+--------------------------------------------+------------------+
-| ``schema_of`` types  | Always exact (names and types must match)  | Snapshots only   |
-+----------------------+--------------------------------------------+------------------+
++----------------------+---------------------------------------+------------------+
+| ``subset=True``      | Declared columns present, extras OK   | Default          |
++----------------------+---------------------------------------+------------------+
+| ``subset=False``     | Declared columns present, no extras   | Strict mode      |
++----------------------+---------------------------------------+------------------+
+| ``schema_of`` types  | Always exact, names and types         | Ignores subset   |
++----------------------+---------------------------------------+------------------+
 
 Multi-stage pipeline
 --------------------

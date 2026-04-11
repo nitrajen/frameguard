@@ -368,6 +368,21 @@
         <span class="n">declared_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">to_struct</span><span class="p">()</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
         <span class="k">return</span> <span class="n">actual_names</span> <span class="o">==</span> <span class="n">declared_names</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_dataframe</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">spark</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Spark DataFrame from *data* using this schema as the ``StructType``.</span>
+
+<span class="sd">        Shorthand for ``spark.createDataFrame(data, MySchema.to_struct())``.</span>
+<span class="sd">        Useful in tests and scripts to build typed sample data without repeating</span>
+<span class="sd">        the schema definition::</span>
+
+<span class="sd">            raw = RawOrderSchema.create_dataframe(spark, [</span>
+<span class="sd">                (1, 101, 50.0, 3, &quot;confirmed&quot;),</span>
+<span class="sd">                (2, 102, 200.0, 5, &quot;pending&quot;),</span>
+<span class="sd">            ])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">to_struct</span><span class="p">())</span>
+
 <div class="viewcode-block" id="SparkSchema.to_struct">
 <a class="viewcode-back" href="../../../api/pyspark/schemas.html#frameguard.pyspark.schema.SparkSchema.to_struct">[docs]</a>
     <span class="nd">@classmethod</span>

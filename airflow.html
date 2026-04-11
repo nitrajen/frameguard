@@ -250,7 +250,7 @@
 <h1>Using frameguard in Airflow<a class="headerlink" href="#using-frameguard-in-airflow" title="Link to this heading">¶</a></h1>
 <p>In Airflow, each task is a Python callable. Tasks receive file paths and
 configuration, create their own SparkSession, do the work, and write results
-back to storage. DataFrames never cross task boundaries — they are too large
+back to storage. DataFrames never cross task boundaries; they are too large
 for XCom.</p>
 <p>This means <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> on the <em>task function itself</em> gives you little:
 the arguments are strings and integers, not DataFrames. The useful pattern is:</p>
@@ -301,7 +301,7 @@ schema drift from upstream before processing starts</p></li>
 <section id="transforms-py">
 <h2>transforms.py<a class="headerlink" href="#transforms-py" title="Link to this heading">¶</a></h2>
 <p>Pure transformation functions. Each is annotated with <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> so that
-the wrong DataFrame cannot be passed in — regardless of which task calls them.</p>
+the wrong DataFrame cannot be passed in regardless of which task calls them.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># pipeline/transforms.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
@@ -331,7 +331,7 @@ the wrong DataFrame cannot be passed in — regardless of which task calls them.
 <section id="orders-dag-py">
 <h2>orders_dag.py<a class="headerlink" href="#orders-dag-py" title="Link to this heading">¶</a></h2>
 <p>Each task validates the DataFrame immediately after loading, then calls the
-appropriate transform. Tasks are completely independent — each creates and
+appropriate transform. Tasks are completely independent; each creates and
 stops its own SparkSession.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># dags/orders_dag.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span><span class="o">,</span><span class="w"> </span><span class="nn">os</span>

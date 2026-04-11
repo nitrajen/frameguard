@@ -248,12 +248,13 @@
         <article role="main" id="furo-main-content">
           <section id="using-frameguard-in-kedro">
 <h1>Using frameguard in Kedro<a class="headerlink" href="#using-frameguard-in-kedro" title="Link to this heading">¶</a></h1>
-<p>Kedro is a pipeline framework that structures data projects into nodes,
-pipelines, and a data catalog. A node is a pure Python function; Kedro
-wires inputs and outputs through the catalog.</p>
-<p>frameguard fits naturally: annotate node functions with <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> and
-schema errors surface at the node boundary, before any Spark execution. The
-working example lives at <code class="docutils literal notranslate"><span class="pre">examples/kedro/</span></code> in the frameguard repository.</p>
+<p><a class="reference external" href="https://docs.kedro.org">Kedro</a> is a pipeline framework that structures data
+projects into nodes, pipelines, and a data catalog. A node is a pure Python
+function; Kedro wires inputs and outputs through the catalog.</p>
+<p>frameguard fits naturally into Kedro. Schemas live in the node files alongside
+the functions that use them. <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> arms the entire
+package from one place, so node functions need no <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> decorator.</p>
+<p>The working example lives at <code class="docutils literal notranslate"><span class="pre">examples/kedro/</span></code> in the frameguard repository.</p>
 <section id="file-structure">
 <h2>File structure<a class="headerlink" href="#file-structure" title="Link to this heading">¶</a></h2>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>kedro/
@@ -298,14 +299,16 @@ and consumes.</p>
 </section>
 <section id="nodes-py">
 <h2>nodes.py<a class="headerlink" href="#nodes-py" title="Link to this heading">¶</a></h2>
-<p>Each node is a plain Python function. <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> is the only addition —
-no validation logic inside the function body.</p>
+<p>Each node is a plain Python function with a schema-annotated argument.
+No <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> decorator needed; <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>
+handles that for the whole package. No validation logic inside the function body.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># src/orders_pipeline/pipelines/processing/nodes.py</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">orders_pipeline.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnrichedOrderSchema</span><span class="p">,</span> <span class="n">RawOrderSchema</span>
 
-<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="c1"># No @fg.enforce needed; fg.arm() in settings.py covers the whole package.</span>
+<span class="c1"># The type annotations on the arguments are the contract.</span>
+
 <span class="k">def</span><span class="w"> </span><span class="nf">enrich_orders</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">RawOrderSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">raw</span>
@@ -313,7 +316,6 @@ no validation logic inside the function body.</p>
         <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_high_value&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">500.0</span><span class="p">)</span>
     <span class="p">)</span>
 
-<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">summarise_by_customer</span><span class="p">(</span><span class="n">enriched</span><span class="p">:</span> <span class="n">EnrichedOrderSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">enriched</span>
@@ -379,6 +381,12 @@ no validation logic inside the function body.</p>
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>src/
 kedro<span class="w"> </span>run
+
+<span class="c1"># Run a specific pipeline</span>
+kedro<span class="w"> </span>run<span class="w"> </span>--pipeline<span class="w"> </span>processing
+
+<span class="c1"># Run a single node</span>
+kedro<span class="w"> </span>run<span class="w"> </span>--node<span class="w"> </span>enrich_orders_node
 </pre></div>
 </div>
 </section>
@@ -395,7 +403,7 @@ frameguard message:</p>
 </pre></div>
 </div>
 <p>If the CSV source adds an unexpected column or changes a type, the error
-appears at the first node that touches that column — not deep in a shuffle or
+appears at the first node that touches that column, not deep in a shuffle or
 aggregation.</p>
 </section>
 <section id="where-to-define-schemas">
@@ -413,11 +421,11 @@ one file per domain works well:</p>
 </pre></div>
 </div>
 </section>
-<section id="using-fg-arm-instead-of-fg-enforce">
-<h2>Using fg.arm() instead of &#64;fg.enforce<a class="headerlink" href="#using-fg-arm-instead-of-fg-enforce" title="Link to this heading">¶</a></h2>
-<p>For projects where you want enforcement on every function without adding
-<code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> individually, call <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> at startup instead. A Kedro
-hook is the right place for this:</p>
+<section id="using-fg-enforce-instead-of-fg-arm">
+<h2>Using &#64;fg.enforce instead of fg.arm()<a class="headerlink" href="#using-fg-enforce-instead-of-fg-arm" title="Link to this heading">¶</a></h2>
+<p>If you prefer explicit decoration over package-wide arming, add <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code>
+to individual node functions instead of calling <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>.
+Both approaches work; the choice is style:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># src/orders_pipeline/hooks.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">kedro.framework.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">hook_impl</span>
@@ -428,20 +436,36 @@ hook is the right place for this:</p>
         <span class="n">fg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">package</span><span class="o">=</span><span class="s2">&quot;orders_pipeline.pipelines&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Then register it in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># src/orders_pipeline/settings.py</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">orders_pipeline.hooks</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrameguardHook</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># src/orders_pipeline/pipelines/processing/nodes.py  (with explicit decoration)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">orders_pipeline.schemas</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnrichedOrderSchema</span><span class="p">,</span> <span class="n">RawOrderSchema</span>
 
-<span class="n">HOOKS</span> <span class="o">=</span> <span class="p">(</span><span class="n">FrameguardHook</span><span class="p">(),)</span>
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich_orders</span><span class="p">(</span><span class="n">raw</span><span class="p">:</span> <span class="n">RawOrderSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">raw</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">summarise_by_customer</span><span class="p">(</span><span class="n">enriched</span><span class="p">:</span> <span class="n">EnrichedOrderSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">enriched</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="n">F</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;total_revenue&quot;</span><span class="p">),</span>
+        <span class="n">F</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;order_count&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
 </pre></div>
 </div>
-<p>With this setup, every public function in <code class="docutils literal notranslate"><span class="pre">orders_pipeline.pipelines</span></code> is
-automatically wrapped. Node functions need no decorators at all.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> on individual nodes is more explicit and easier to reason
-about. <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> via hooks is better for large projects where you want
-blanket coverage without touching every file.</p>
+<div class="table-wrapper docutils container">
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code></p></td>
+<td><p>One call, whole package covered, no
+decorator on each function</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> per function</p></td>
+<td><p>Explicit, visible at the function, easier
+to reason about in isolation</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </section>
 </section>
@@ -510,7 +534,7 @@ blanket coverage without touching every file.</p>
 <li><a class="reference internal" href="#running-the-pipeline">Running the pipeline</a></li>
 <li><a class="reference internal" href="#what-a-schema-error-looks-like">What a schema error looks like</a></li>
 <li><a class="reference internal" href="#where-to-define-schemas">Where to define schemas</a></li>
-<li><a class="reference internal" href="#using-fg-arm-instead-of-fg-enforce">Using fg.arm() instead of &#64;fg.enforce</a></li>
+<li><a class="reference internal" href="#using-fg-enforce-instead-of-fg-arm">Using &#64;fg.enforce instead of fg.arm()</a></li>
 </ul>
 </li>
 </ul>

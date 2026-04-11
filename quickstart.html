@@ -252,6 +252,11 @@
 </pre></div>
 </div>
 <p>Requires Python &gt;= 3.10, PySpark &gt;= 3.3.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>frameguard currently supports <strong>PySpark</strong>. Support for additional DataFrame
+libraries (pandas, polars, and others) is planned.</p>
+</div>
 <p>All examples on this page assume the following setup:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
@@ -367,7 +372,7 @@ analysis is not a priority for that function.</p>
 <h2>Enforcement<a class="headerlink" href="#enforcement" title="Link to this heading">¶</a></h2>
 <p>There are two ways to add enforcement. Both accept the same <code class="docutils literal notranslate"><span class="pre">subset</span></code> parameter.</p>
 <section id="fg-enforce-per-function">
-<h3><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> — per function<a class="headerlink" href="#fg-enforce-per-function" title="Link to this heading">¶</a></h3>
+<h3><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> per function<a class="headerlink" href="#fg-enforce-per-function" title="Link to this heading">¶</a></h3>
 <p>Decorate individual functions. Use this in scripts, notebooks, and any place
 where you want explicit, visible contracts.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
@@ -389,18 +394,17 @@ where you want explicit, visible contracts.</p>
 </div>
 </section>
 <section id="fg-arm-whole-package">
-<h3><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> — whole package<a class="headerlink" href="#fg-arm-whole-package" title="Link to this heading">¶</a></h3>
-<p>Call once from your pipeline entry point. It walks the entire package and
-wraps every annotated public function automatically. Use this for importable
-pipeline packages.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/settings.py  (or __init__.py)</span>
+<h3><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> whole package<a class="headerlink" href="#fg-arm-whole-package" title="Link to this heading">¶</a></h3>
+<p>Call once from your package <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> or entry point. It walks the entire
+package and wraps every annotated public function automatically. Node functions
+need no <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> decorator; the annotation on the argument is enough.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/__init__.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 
 <span class="n">fg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>                 <span class="c1"># subset=True globally (default)</span>
 <span class="c1"># fg.arm(subset=False)   # exact match everywhere</span>
 </pre></div>
 </div>
-<p>Node files need no decorators:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/nodes.py</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
@@ -410,7 +414,7 @@ pipeline packages.</p>
     <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
     <span class="n">quantity</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
 
-<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>   <span class="c1"># enforced automatically</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>   <span class="c1"># enforced by fg.arm(), no decorator needed</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>    <span class="c1"># also enforced</span>
@@ -423,18 +427,16 @@ pipeline packages.</p>
 (<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">nodes.py</span></code>). It emits a warning in that case. Use <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code>
 in scripts and notebooks.</p>
 </div>
+<p>For pipeline framework integration see <a class="reference internal" href="kedro.html"><span class="doc">Using frameguard in Kedro</span></a> and <a class="reference internal" href="airflow.html"><span class="doc">Using frameguard in Airflow</span></a>.</p>
 </section>
 </section>
 <section id="the-subset-parameter">
 <h2>The subset parameter<a class="headerlink" href="#the-subset-parameter" title="Link to this heading">¶</a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">subset</span></code> controls how strictly the DataFrame schema is checked against the
-declared type. It is a first-class parameter on both <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> and
-<code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code>.</p>
-<p><strong>subset=True</strong> (default): the DataFrame must have all declared columns with
-the correct types. Extra columns beyond the declaration are allowed.</p>
-<p>This is the right default for <code class="docutils literal notranslate"><span class="pre">fg.SparkSchema</span></code>. A schema class expresses
-<em>what the function needs</em>, not <em>exactly what the DataFrame looks like</em>. An
-enriched DataFrame with 10 columns satisfies a schema that declares 3.</p>
+<p><code class="docutils literal notranslate"><span class="pre">subset</span></code> is available on both <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> and <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code>. Default is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+<ul class="simple">
+<li><p><strong>subset=True</strong>: all declared columns must be present with correct types; extra columns are fine.</p></li>
+<li><p><strong>subset=False</strong>: declared columns must be present and no extras are allowed.</p></li>
+</ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
@@ -444,55 +446,47 @@ enriched DataFrame with 10 columns satisfies a schema that declares 3.</p>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
     <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
+<span class="c1"># enriched_df has an extra &#39;revenue&#39; column</span>
 <span class="n">enriched_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
     <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">99.0</span><span class="p">,</span> <span class="mf">300.0</span><span class="p">)],</span>
-    <span class="s2">&quot;order_id LONG, amount DOUBLE, revenue DOUBLE&quot;</span><span class="p">,</span>   <span class="c1"># has extra column</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, revenue DOUBLE&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>                     <span class="c1"># subset=True by default</span>
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># default: extra columns are fine</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
 
-<span class="n">process</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes — revenue is extra but OrderSchema only needs order_id and amount</span>
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>       <span class="c1"># strict: no extra columns allowed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="n">process</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes</span>
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: &#39;revenue&#39; is not in OrderSchema</span>
+<span class="c1"># TypeError: Schema mismatch in write_orders() argument &#39;df&#39;:</span>
+<span class="c1">#   expected: order_id:bigint, amount:double</span>
+<span class="c1">#   received: order_id:bigint, amount:double, revenue:double</span>
 </pre></div>
 </div>
-<p><strong>subset=False</strong>: the DataFrame must have <em>exactly</em> the declared columns. Any
-extra column is a contract violation.</p>
-<p>Use this when a function is the final consumer of a schema — a write node, a
-report generator, or any function where an unexpected column indicates
-something went wrong upstream.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
+<p><strong>Global default via fg.arm(), per-function override via &#64;fg.enforce()</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">fg.arm(subset=...)</span></code> sets the global default. <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce(subset=...)</span></code> overrides
+it for that function only. Function level always wins.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># global: strict everywhere</span>
 
-<span class="n">process</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes — subset=True</span>
-<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises — revenue is not in OrderSchema</span>
-</pre></div>
-</div>
-<p><strong>Global and function-level settings</strong>: <code class="docutils literal notranslate"><span class="pre">fg.arm(subset=...)</span></code> sets the global
-default for the whole package. <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce(subset=...)</span></code> overrides it for
-that specific function. Function level always wins.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>                     <span class="c1"># inherits global subset=False</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">fg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
-
-<span class="n">fg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># strict globally: no extra columns anywhere</span>
-
-<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># this function is more lenient</span>
+<span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># overrides global for this function only</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
 
-<span class="c1"># inspect() allows extra columns even though arm(subset=False) is set globally</span>
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: global subset=False applies</span>
+<span class="n">inspect</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes: function-level subset=True wins</span>
 </pre></div>
 </div>
-<p>Note: <code class="docutils literal notranslate"><span class="pre">fg.schema_of(df)</span></code> types always use exact matching regardless of
-<code class="docutils literal notranslate"><span class="pre">subset</span></code>. A snapshot type represents one precise schema; the <code class="docutils literal notranslate"><span class="pre">subset</span></code> flag
-does not apply to it.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fg.schema_of(df)</span></code> types always use exact matching regardless of <code class="docutils literal notranslate"><span class="pre">subset</span></code>.
+A snapshot is a snapshot.</p>
 <div class="table-wrapper docutils container">
 <table class="docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">subset=True</span></code></p></td>
-<td><p>All declared columns present, extras OK</p></td>
+<td><p>Declared columns present, extras OK</p></td>
 <td><p>Default</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">subset=False</span></code></p></td>
@@ -500,8 +494,8 @@ does not apply to it.</p>
 <td><p>Strict mode</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">schema_of</span></code> types</p></td>
-<td><p>Always exact (names and types must match)</p></td>
-<td><p>Snapshots only</p></td>
+<td><p>Always exact, names and types</p></td>
+<td><p>Ignores subset</p></td>
 </tr>
 </tbody>
 </table>
@@ -682,8 +676,8 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 </ul>
 </li>
 <li><a class="reference internal" href="#enforcement">Enforcement</a><ul>
-<li><a class="reference internal" href="#fg-enforce-per-function"><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> — per function</a></li>
-<li><a class="reference internal" href="#fg-arm-whole-package"><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> — whole package</a></li>
+<li><a class="reference internal" href="#fg-enforce-per-function"><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> per function</a></li>
+<li><a class="reference internal" href="#fg-arm-whole-package"><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> whole package</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#the-subset-parameter">The subset parameter</a></li>

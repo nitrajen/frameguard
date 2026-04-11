@@ -265,7 +265,8 @@ reach for in each case.</p>
 <td><p><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code></p></td>
 </tr>
 <tr class="row-odd"><td><p>Enforce an entire package from one place</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in settings.py</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> in <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> (Kedro: see
+<a class="reference internal" href="kedro.html"><span class="doc">Using frameguard in Kedro</span></a>)</p></td>
 </tr>
 <tr class="row-even"><td><p>Validate a DataFrame right after loading</p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">MySchema.assert_valid(df)</span></code></p></td>
@@ -288,9 +289,13 @@ live DataFrame in hand.</p>
 <hr class="docutils" />
 <section id="kedro">
 <h2>Kedro<a class="headerlink" href="#kedro" title="Link to this heading">¶</a></h2>
-<p>The recommended structure is: <code class="docutils literal notranslate"><span class="pre">fg.SparkSchema</span></code> for every node schema,
-<code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> once in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>. No decoration on individual functions,
-no imports scattered across every node file.</p>
+<p><a class="reference external" href="https://docs.kedro.org">Kedro</a> is a pipeline framework that structures projects
+into nodes, pipelines, and a data catalog. See <a class="reference internal" href="kedro.html"><span class="doc">Using frameguard in Kedro</span></a> for a full working
+example with runnable code.</p>
+<p>The recommended structure is: <code class="docutils literal notranslate"><span class="pre">fg.SparkSchema</span></code> for every node schema, defined
+alongside the functions that use them. <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> called once in <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>
+wraps every annotated function in the package automatically, so node functions need
+no <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> decorator.</p>
 <section id="define-schemas-and-nodes">
 <h3>Define schemas and nodes<a class="headerlink" href="#define-schemas-and-nodes" title="Link to this heading">¶</a></h3>
 <p>Schemas live alongside the functions that use them.</p>
@@ -335,8 +340,10 @@ no imports scattered across every node file.</p>
 </section>
 <section id="arm-everything-from-settings-py">
 <h3>Arm everything from settings.py<a class="headerlink" href="#arm-everything-from-settings-py" title="Link to this heading">¶</a></h3>
-<p>Kedro loads <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> before any pipeline runs. One call there and
-every node in the package is enforced, with no changes to the node files.</p>
+<p>Kedro loads <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> before any pipeline runs. One call there wraps
+every annotated function in the package. Node files keep their schema
+definitions and type annotations; those are the contract. What they do not
+need is the <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> decorator on each function.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/settings.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 
@@ -347,11 +354,14 @@ every node in the package is enforced, with no changes to the node files.</p>
 with a schema annotation, and wraps it. Functions without schema annotations
 are left alone. Arguments that are not DataFrames (<code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, etc.)
 inside wrapped functions are also not touched.</p>
+<p>Run with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>kedro<span class="w"> </span>run
+</pre></div>
+</div>
 </section>
 <section id="what-you-get">
 <h3>What you get<a class="headerlink" href="#what-you-get" title="Link to this heading">¶</a></h3>
-<p>After <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> loads, Kedro’s runner calls your nodes normally. The
-wrong DataFrame raises before any Spark work happens:</p>
+<p>The wrong DataFrame raises before any Spark work happens:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># raw_df has order_id, amount, quantity, customer_id</span>
 <span class="n">validate_orders</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>       <span class="c1"># OK</span>
 
@@ -373,9 +383,10 @@ wrong DataFrame raises before any Spark work happens:</p>
 <hr class="docutils" />
 <section id="airflow">
 <h2>Airflow<a class="headerlink" href="#airflow" title="Link to this heading">¶</a></h2>
-<p>Airflow tasks are Python callables. They receive paths or config, create a
-SparkSession inside, do the work, and write the result. DataFrames are never
-passed between tasks directly; only serializable values are.</p>
+<p><a class="reference external" href="https://airflow.apache.org">Apache Airflow</a> tasks are Python callables. They
+receive paths or config, create a SparkSession inside, do the work, and write
+the result. DataFrames are never passed between tasks directly; only serializable
+values are. See <a class="reference internal" href="airflow.html"><span class="doc">Using frameguard in Airflow</span></a> for a full working example.</p>
 <p>This means <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> on task functions doesn’t buy you much (the args are
 strings, not DataFrames). The useful tools are:</p>
 <ul class="simple">
@@ -432,6 +443,11 @@ from upstream the moment data enters your task, not halfway through processing</
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">assert_valid</span></code> raises <code class="docutils literal notranslate"><span class="pre">SchemaValidationError</span></code> with a clear message
 listing every missing or mismatched field.</p>
+<p>Run with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>airflow<span class="w"> </span>dags<span class="w"> </span>trigger<span class="w"> </span>orders_pipeline
+</pre></div>
+</div>
+<p>Or trigger via the Airflow web UI at <code class="docutils literal notranslate"><span class="pre">http://localhost:8080</span></code>.</p>
 </section>
 </section>
 <hr class="docutils" />
