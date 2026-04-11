@@ -288,7 +288,7 @@ is enforced automatically.</p>
 <dt class="sig sig-object py" id="frameguard.pyspark._enforcement.arm">
 <span class="sig-prename descclassname"><span class="pre">frameguard.pyspark._enforcement.</span></span><span class="sig-name descname"><span class="pre">arm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">package</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/frameguard/pyspark/_enforcement.html#arm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#frameguard.pyspark._enforcement.arm" title="Link to this definition">¶</a></dt>
 <dd><p>Arm the entire calling package and set the global subset default.</p>
-<p>Call once — typically in your entry point, <code class="docutils literal notranslate"><span class="pre">settings.py</span></code>, or <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>:</p>
+<p>Call once from your entry point, <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>, or <code class="docutils literal notranslate"><span class="pre">settings.py</span></code> (Kedro):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 
 <span class="n">fg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>                <span class="c1"># subset=True (default): extra columns are fine</span>
@@ -375,22 +375,22 @@ custom classes) are left completely alone.</p>
 <p>Validate schema annotations on DataFrame arguments.</p>
 <p>Only intercepts parameters annotated with a <code class="docutils literal notranslate"><span class="pre">fg.schema_of</span></code> type or a
 <code class="docutils literal notranslate"><span class="pre">fg.SparkSchema</span></code> subclass. All other arguments are left completely alone.</p>
-<p><strong>Default</strong> — inherits the global <code class="docutils literal notranslate"><span class="pre">subset</span></code> set by <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="o">...</span>
-</pre></div>
-</div>
-<p><strong>subset=True</strong> — extra columns in the DataFrame are fine (overrides global):</p>
+<p><strong>Default</strong>: inherits the global <code class="docutils literal notranslate"><span class="pre">subset</span></code> set by <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code>:</p>
+<blockquote>
+<div><p>&#64;fg.enforce
+def process(df: OrderSchema, label: str): …</p>
+</div></blockquote>
+<p><strong>subset=True</strong>: extra columns in the DataFrame are fine (overrides global):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>
 </div>
-<p><strong>subset=False</strong> — DataFrame must match the schema exactly (overrides global):</p>
+<p><strong>subset=False</strong>: DataFrame must match the schema exactly (overrides global):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>
 </div>
-<p><strong>always=True</strong> — enforces even after <code class="docutils literal notranslate"><span class="pre">fg.disable()</span></code> is called:</p>
+<p><strong>always=True</strong>: enforces even after <code class="docutils literal notranslate"><span class="pre">fg.disable()</span></code> is called:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_to_prod</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">FinalSchema</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>

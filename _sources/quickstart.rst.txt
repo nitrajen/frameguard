@@ -76,19 +76,10 @@ Declare the schema as a class. No live DataFrame needed.
    class EnrichedSchema(OrderSchema):    # inherits all OrderSchema fields
        revenue: T.DoubleType()
 
-   # Create a DataFrame that matches OrderSchema (including the nested address struct)
-   address_type = T.StructType([
-       T.StructField("street", T.StringType()),
-       T.StructField("city",   T.StringType()),
-       T.StructField("zip",    T.StringType(), nullable=True),
-   ])
+   # Use the schema directly when creating a DataFrame (no manual StructType needed)
    order_df = spark.createDataFrame(
        [(1, 99.0, ("123 Main St", "Austin", "78701"))],
-       T.StructType([
-           T.StructField("order_id", T.LongType()),
-           T.StructField("amount",   T.DoubleType()),
-           T.StructField("address",  address_type),
-       ]),
+       OrderSchema.to_struct(),
    )
 
    OrderSchema.assert_valid(order_df)   # passes: all declared fields present
@@ -188,8 +179,15 @@ need no ``@fg.enforce`` decorator; the annotation on the argument is enough.
 .. warning::
 
    ``fg.arm()`` has no effect when a module is run directly as a script
-   (``python nodes.py``). It emits a warning in that case. Use ``@fg.enforce``
-   in scripts and notebooks.
+   (``python nodes.py``).
+
+   The reason: ``fg.arm()`` works by walking Python's module registry. When you
+   run a file as a script, Python loads it as ``__main__``, not under its package
+   name (e.g. ``my_pipeline.nodes``). So ``fg.arm(package="my_pipeline")`` finds
+   no modules to wrap. ``@fg.enforce`` works in scripts because it is applied
+   directly to the function at definition time, before any module name matters.
+
+   Use ``@fg.enforce`` in scripts and notebooks.
 
 For pipeline framework integration see :doc:`kedro` and :doc:`airflow`.
 
@@ -310,6 +308,50 @@ Each stage captures its output schema, which becomes the contract for the next s
    aggregate(enriched_df)   # raises: missing is_vip
    aggregate(flagged_df)    # OK
 
+Validating at load time
+-----------------------
+
+``@fg.enforce`` guards function boundaries. For storage boundaries (reading from
+parquet, CSV, a data catalog) use ``Schema.assert_valid(df)`` immediately after
+loading. This catches upstream schema drift before any processing starts.
+
+.. code-block:: python
+
+   raw = spark.read.parquet("/data/orders/raw.parquet")
+   RawOrderSchema.assert_valid(raw)   # raises SchemaValidationError if schema changed
+
+   enriched = enrich(raw)             # @fg.enforce then guards the function call
+
+``assert_valid`` reports all problems at once, not just the first one:
+
+.. code-block:: text
+
+   SchemaValidationError: Schema validation failed:
+     Column 'revenue': type mismatch -- expected double, got string
+     Missing column 'is_high_value' (expected boolean, nullable=False)
+
+``validate()`` does the same check but returns a list of errors instead of raising,
+useful when you want to inspect or log problems without stopping execution.
+
+Disabling enforcement
+---------------------
+
+``fg.arm()`` and ``@fg.enforce`` control *which* functions are guarded.
+``fg.disable()`` and ``fg.enable_enforcement()`` are a global kill switch for *whether*
+checks run at all. Every guarded function passes through without checking while
+disabled, regardless of how it was armed.
+
+.. code-block:: python
+
+   fg.disable()           # turn off all checks globally
+   enrich(wrong_df)       # passes: enforcement is off
+   fg.enable_enforcement()
+   enrich(wrong_df)       # raises again
+
+This is useful in tests where you want to exercise transformation logic without
+providing schema-valid fixtures. ``@fg.enforce(always=True)`` opts a specific
+function out of the kill switch and always checks, even when disabled.
+
 Schema history
 --------------
 
@@ -356,6 +398,12 @@ SparkSchema utilities
    class OrderSchema(fg.SparkSchema):
        order_id: T.LongType()
        amount:   T.DoubleType()
+
+   # Use the schema when creating a DataFrame
+   df = spark.createDataFrame(
+       [(1, 10.0), (2, 5.0)],
+       OrderSchema.to_struct(),
+   )
 
    # Create an empty DataFrame with the right schema (useful in tests)
    empty_ds = OrderSchema.empty(spark)

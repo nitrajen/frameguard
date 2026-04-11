@@ -310,19 +310,10 @@ satisfy <code class="docutils literal notranslate"><span class="pre">RawSchema</
 <span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>    <span class="c1"># inherits all OrderSchema fields</span>
     <span class="n">revenue</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
-<span class="c1"># Create a DataFrame that matches OrderSchema (including the nested address struct)</span>
-<span class="n">address_type</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">([</span>
-    <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;street&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
-    <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;city&quot;</span><span class="p">,</span>   <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
-    <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;zip&quot;</span><span class="p">,</span>    <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-<span class="p">])</span>
+<span class="c1"># Use the schema directly when creating a DataFrame (no manual StructType needed)</span>
 <span class="n">order_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
     <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">99.0</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;123 Main St&quot;</span><span class="p">,</span> <span class="s2">&quot;Austin&quot;</span><span class="p">,</span> <span class="s2">&quot;78701&quot;</span><span class="p">))],</span>
-    <span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">([</span>
-        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;order_id&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()),</span>
-        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">,</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()),</span>
-        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;address&quot;</span><span class="p">,</span>  <span class="n">address_type</span><span class="p">),</span>
-    <span class="p">]),</span>
+    <span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">(),</span>
 <span class="p">)</span>
 
 <span class="n">OrderSchema</span><span class="o">.</span><span class="n">assert_valid</span><span class="p">(</span><span class="n">order_df</span><span class="p">)</span>   <span class="c1"># passes: all declared fields present</span>
@@ -424,8 +415,13 @@ need no <code class="docutils literal notranslate"><span class="pre">&#64;fg.enf
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> has no effect when a module is run directly as a script
-(<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">nodes.py</span></code>). It emits a warning in that case. Use <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code>
-in scripts and notebooks.</p>
+(<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">nodes.py</span></code>).</p>
+<p>The reason: <code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> works by walking Python’s module registry. When you
+run a file as a script, Python loads it as <code class="docutils literal notranslate"><span class="pre">__main__</span></code>, not under its package
+name (e.g. <code class="docutils literal notranslate"><span class="pre">my_pipeline.nodes</span></code>). So <code class="docutils literal notranslate"><span class="pre">fg.arm(package=&quot;my_pipeline&quot;)</span></code> finds
+no modules to wrap. <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> works in scripts because it is applied
+directly to the function at definition time, before any module name matters.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> in scripts and notebooks.</p>
 </div>
 <p>For pipeline framework integration see <a class="reference internal" href="kedro.html"><span class="doc">Using frameguard in Kedro</span></a> and <a class="reference internal" href="airflow.html"><span class="doc">Using frameguard in Airflow</span></a>.</p>
 </section>
@@ -550,6 +546,42 @@ A snapshot is a snapshot.</p>
 </pre></div>
 </div>
 </section>
+<section id="validating-at-load-time">
+<h2>Validating at load time<a class="headerlink" href="#validating-at-load-time" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> guards function boundaries. For storage boundaries (reading from
+parquet, CSV, a data catalog) use <code class="docutils literal notranslate"><span class="pre">Schema.assert_valid(df)</span></code> immediately after
+loading. This catches upstream schema drift before any processing starts.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&quot;/data/orders/raw.parquet&quot;</span><span class="p">)</span>
+<span class="n">RawOrderSchema</span><span class="o">.</span><span class="n">assert_valid</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>   <span class="c1"># raises SchemaValidationError if schema changed</span>
+
+<span class="n">enriched</span> <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>             <span class="c1"># @fg.enforce then guards the function call</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">assert_valid</span></code> reports all problems at once, not just the first one:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SchemaValidationError: Schema validation failed:
+  Column &#39;revenue&#39;: type mismatch -- expected double, got string
+  Missing column &#39;is_high_value&#39; (expected boolean, nullable=False)
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">validate()</span></code> does the same check but returns a list of errors instead of raising,
+useful when you want to inspect or log problems without stopping execution.</p>
+</section>
+<section id="disabling-enforcement">
+<h2>Disabling enforcement<a class="headerlink" href="#disabling-enforcement" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">fg.arm()</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce</span></code> control <em>which</em> functions are guarded.
+<code class="docutils literal notranslate"><span class="pre">fg.disable()</span></code> and <code class="docutils literal notranslate"><span class="pre">fg.enable_enforcement()</span></code> are a global kill switch for <em>whether</em>
+checks run at all. Every guarded function passes through without checking while
+disabled, regardless of how it was armed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fg</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>           <span class="c1"># turn off all checks globally</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>       <span class="c1"># passes: enforcement is off</span>
+<span class="n">fg</span><span class="o">.</span><span class="n">enable_enforcement</span><span class="p">()</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>       <span class="c1"># raises again</span>
+</pre></div>
+</div>
+<p>This is useful in tests where you want to exercise transformation logic without
+providing schema-valid fixtures. <code class="docutils literal notranslate"><span class="pre">&#64;fg.enforce(always=True)</span></code> opts a specific
+function out of the kill switch and always checks, even when disabled.</p>
+</section>
 <section id="schema-history">
 <h2>Schema history<a class="headerlink" href="#schema-history" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">fg.dataset(df)</span></code> wraps a DataFrame and records every schema-changing operation.
@@ -591,6 +623,12 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">fg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
     <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+
+<span class="c1"># Use the schema when creating a DataFrame</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)],</span>
+    <span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">(),</span>
+<span class="p">)</span>
 
 <span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
 <span class="n">empty_ds</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">spark</span><span class="p">)</span>
@@ -682,6 +720,8 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 </li>
 <li><a class="reference internal" href="#the-subset-parameter">The subset parameter</a></li>
 <li><a class="reference internal" href="#multi-stage-pipeline">Multi-stage pipeline</a></li>
+<li><a class="reference internal" href="#validating-at-load-time">Validating at load time</a></li>
+<li><a class="reference internal" href="#disabling-enforcement">Disabling enforcement</a></li>
 <li><a class="reference internal" href="#schema-history">Schema history</a></li>
 <li><a class="reference internal" href="#sparkschema-utilities">SparkSchema utilities</a></li>
 </ul>

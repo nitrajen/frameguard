@@ -241,7 +241,7 @@
         <article role="main" id="furo-main-content">
           <h1>Source code for frameguard.pyspark.dataset</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">frameguard.pyspark.dataset — schema-as-type for PySpark DataFrames.</span>
+<span class="sd">frameguard.pyspark.dataset: schema-as-type for PySpark DataFrames.</span>
 
 <span class="sd">``schema_of(df)`` captures a DataFrame&#39;s schema as a Python class.</span>
 <span class="sd">Use that class as a type annotation and beartype enforces it at every call.</span>
@@ -255,7 +255,7 @@
 <span class="sd">    def enrich(df: RawSchema) -&gt; RichSchema:   # wrong schema → error at call site</span>
 <span class="sd">        return df.withColumn(&quot;revenue&quot;, F.col(&quot;amount&quot;) * F.col(&quot;quantity&quot;))</span>
 
-<span class="sd">The returned class is a real Python class — isinstance(df, RawSchema) works,</span>
+<span class="sd">The returned class is a real Python class (isinstance(df, RawSchema) works,</span>
 <span class="sd">and it integrates naturally with beartype, mypy stubs, and your own tooling.</span>
 
 <span class="sd">For mutation tracking use ``dataset(df)`` (aliased as ``_make_dataset``):</span>
@@ -275,7 +275,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">frameguard.pyspark.history</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaChange</span><span class="p">,</span> <span class="n">SchemaHistory</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Metaclass — enables structural isinstance checks based on schema</span>
+<span class="c1"># Metaclass: enables structural isinstance checks based on schema</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_TypedDatasetMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
@@ -300,7 +300,7 @@
             <span class="k">return</span> <span class="kc">True</span>
 
         <span class="c1"># Exact match: same column names AND same types, no extras allowed.</span>
-        <span class="c1"># A DataFrame with extra columns does NOT satisfy the contract —</span>
+        <span class="c1"># A DataFrame with extra columns does NOT satisfy the contract;</span>
         <span class="c1"># use DT2 = schema_of(enriched_df) to capture the new schema.</span>
         <span class="n">actual</span>   <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">dataType</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
         <span class="n">expected_</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">dataType</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">expected</span><span class="o">.</span><span class="n">fields</span><span class="p">}</span>
@@ -308,7 +308,7 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Base implementation — all methods live here</span>
+<span class="c1"># Base implementation: all methods live here</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <div class="viewcode-block" id="_TypedDatasetBase">
@@ -326,7 +326,7 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_fg_check</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enforcement protocol hook — schema_of types are always exact.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enforcement protocol hook: schema_of types are always exact.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>  <span class="c1"># exact: extra columns fail</span>
 
     <span class="n">_df</span><span class="p">:</span>      <span class="n">Any</span>
@@ -371,7 +371,7 @@
         <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_history&quot;</span><span class="p">,</span> <span class="n">history</span> <span class="ow">or</span> <span class="n">SchemaHistory</span><span class="o">.</span><span class="n">initial</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">schema</span><span class="p">))</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Internal factory — every operation calls this</span>
+    <span class="c1"># Internal factory: every operation calls this</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_wrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_df</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_TypedDatasetBase</span><span class="p">:</span>
@@ -687,7 +687,7 @@
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># Validation via call — DT(other_df) checks schema then wraps</span>
+    <span class="c1"># Validation via call: DT(other_df) checks schema then wraps</span>
     <span class="c1"># ------------------------------------------------------------------</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_TypedDatasetBase</span><span class="p">:</span>
@@ -796,7 +796,7 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected a DataFrame, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Returns a CLASS — beartype calls isinstance(arg, cls) at runtime,</span>
+    <span class="c1"># Returns a CLASS: beartype calls isinstance(arg, cls) at runtime,</span>
     <span class="c1"># routing through _TypedDatasetMeta.__instancecheck__ for schema validation.</span>
     <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">[</span><span class="n">_TypedDatasetBase</span><span class="p">],</span> <span class="n">_TypedDatasetMeta</span><span class="p">(</span>
         <span class="s2">&quot;SchemaType&quot;</span><span class="p">,</span>

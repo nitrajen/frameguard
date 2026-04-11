@@ -1,20 +1,15 @@
 frameguard
 ==========
 
-Schema errors in data pipelines fail at the worst possible time.
+Data pipelines fail late. You pass the wrong DataFrame into a function, the
+job runs, and eventually crashes with an error pointing at the wrong place.
+The actual bug was earlier, at the function call.
 
-A function receives the wrong DataFrame. The job starts: Spark plans the
-query, serializes it, ships work to executors, and then:
+**frameguard moves that failure to the function call.** The wrong DataFrame is
+rejected immediately with a precise error: which function, which argument, what
+schema was expected, what arrived.
 
-.. code-block:: text
-
-   AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] 'revenue' cannot be resolved.
-   Did you mean one of: [order_id, amount, quantity, customer_id]?
-     at org.apache.spark.sql.catalyst.analysis ...
-     (47 more lines)
-
-By then the context is gone. The mismatch happened at the function call,
-before Spark touched anything. **frameguard raises there instead.**
+Currently supports PySpark. pandas and polars support coming soon.
 
 .. code-block:: python
 
@@ -33,8 +28,7 @@ before Spark touched anything. **frameguard raises there instead.**
    def enrich(df: RawSchema):
        return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-   enriched_df    = enrich(raw_df)
-   EnrichedSchema = fg.schema_of(enriched_df)
+   EnrichedSchema = fg.schema_of(enrich(raw_df))
 
    @fg.enforce
    def flag_high_value(df: EnrichedSchema):
@@ -50,16 +44,10 @@ before Spark touched anything. **frameguard raises there instead.**
 No validation logic inside the function. No waiting for Spark.
 The wrong DataFrame simply cannot enter the wrong function.
 
-Zero extra dependencies. ``pip install frameguard[pyspark]`` installs only
-PySpark, which you already have. The enforcement is pure Python ``isinstance()``
-checks. Only your DataFrame arguments are validated; ``str``, ``int``, and
-everything else passes through untouched.
-
-.. note::
-
-   frameguard currently supports **PySpark**. Support for additional DataFrame
-   libraries (pandas, polars, and others) is planned. The enforcement core is
-   designed to be backend-agnostic from the start.
+``pip install frameguard[pyspark]`` installs only PySpark, which you already
+have. Enforcement is pure Python ``isinstance()`` checks. Only schema-annotated
+arguments are validated; ``str``, ``int``, and everything else passes through
+untouched.
 
 Two ways to define a schema
 ----------------------------
@@ -68,25 +56,12 @@ Two ways to define a schema
 
 .. code-block:: python
 
-   import frameguard.pyspark as fg
-   from pyspark.sql import SparkSession, functions as F
-
-   spark = SparkSession.builder.getOrCreate()
-   raw_df = spark.createDataFrame(
-       [(1, 10.0, 3), (2, 5.0, 7)],
-       "order_id LONG, amount DOUBLE, quantity INT",
-   )
-   enriched_df = raw_df.withColumn("revenue", F.col("amount") * F.col("quantity"))
-
    RawSchema      = fg.schema_of(raw_df)
    EnrichedSchema = fg.schema_of(enriched_df)
 
 **Declare upfront** (no DataFrame required):
 
 .. code-block:: python
-
-   import frameguard.pyspark as fg
-   from pyspark.sql import types as T
 
    class OrderSchema(fg.SparkSchema):
        order_id: T.LongType()
@@ -98,13 +73,7 @@ Two ways to define a schema
 ``fg.schema_of`` is precise: exact schema, exact stage.
 ``fg.SparkSchema`` is contractual: declare what you need upfront.
 
-Real pipeline examples
------------------------
-
-See how frameguard integrates into production pipeline frameworks:
-
-- :doc:`airflow`: validate at load time and at function boundaries in Airflow DAGs
-- :doc:`kedro`: annotate Kedro nodes and let the catalog wire everything
+See the :doc:`quickstart` for the full walkthrough.
 
 .. toctree::
    :maxdepth: 2

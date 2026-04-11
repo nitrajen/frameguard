@@ -248,17 +248,13 @@
         <article role="main" id="furo-main-content">
           <section id="frameguard">
 <h1>frameguard<a class="headerlink" href="#frameguard" title="Link to this heading">¶</a></h1>
-<p>Schema errors in data pipelines fail at the worst possible time.</p>
-<p>A function receives the wrong DataFrame. The job starts: Spark plans the
-query, serializes it, ships work to executors, and then:</p>
-<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>AnalysisException: [UNRESOLVED_COLUMN.WITH_SUGGESTION] &#39;revenue&#39; cannot be resolved.
-Did you mean one of: [order_id, amount, quantity, customer_id]?
-  at org.apache.spark.sql.catalyst.analysis ...
-  (47 more lines)
-</pre></div>
-</div>
-<p>By then the context is gone. The mismatch happened at the function call,
-before Spark touched anything. <strong>frameguard raises there instead.</strong></p>
+<p>Data pipelines fail late. You pass the wrong DataFrame into a function, the
+job runs, and eventually crashes with an error pointing at the wrong place.
+The actual bug was earlier, at the function call.</p>
+<p><strong>frameguard moves that failure to the function call.</strong> The wrong DataFrame is
+rejected immediately with a precise error: which function, which argument, what
+schema was expected, what arrived.</p>
+<p>Currently supports PySpark. pandas and polars support coming soon.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 
@@ -274,8 +270,7 @@ before Spark touched anything. <strong>frameguard raises there instead.</strong>
 <span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
 
-<span class="n">enriched_df</span>    <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
-<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">fg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">fg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
 
 <span class="nd">@fg</span><span class="o">.</span><span class="n">enforce</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
@@ -291,38 +286,19 @@ before Spark touched anything. <strong>frameguard raises there instead.</strong>
 </div>
 <p>No validation logic inside the function. No waiting for Spark.
 The wrong DataFrame simply cannot enter the wrong function.</p>
-<p>Zero extra dependencies. <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">frameguard[pyspark]</span></code> installs only
-PySpark, which you already have. The enforcement is pure Python <code class="docutils literal notranslate"><span class="pre">isinstance()</span></code>
-checks. Only your DataFrame arguments are validated; <code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, and
-everything else passes through untouched.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>frameguard currently supports <strong>PySpark</strong>. Support for additional DataFrame
-libraries (pandas, polars, and others) is planned. The enforcement core is
-designed to be backend-agnostic from the start.</p>
-</div>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">frameguard[pyspark]</span></code> installs only PySpark, which you already
+have. Enforcement is pure Python <code class="docutils literal notranslate"><span class="pre">isinstance()</span></code> checks. Only schema-annotated
+arguments are validated; <code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, and everything else passes through
+untouched.</p>
 <section id="two-ways-to-define-a-schema">
 <h2>Two ways to define a schema<a class="headerlink" href="#two-ways-to-define-a-schema" title="Link to this heading">¶</a></h2>
 <p><strong>Capture from a live DataFrame</strong> (exact matching, snapshot at each stage):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
-
-<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
-<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
-    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
-    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
-
-<span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">fg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">fg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">fg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
 </pre></div>
 </div>
 <p><strong>Declare upfront</strong> (no DataFrame required):</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">frameguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">fg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">fg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
     <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
@@ -332,14 +308,7 @@ designed to be backend-agnostic from the start.</p>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">fg.schema_of</span></code> is precise: exact schema, exact stage.
 <code class="docutils literal notranslate"><span class="pre">fg.SparkSchema</span></code> is contractual: declare what you need upfront.</p>
-</section>
-<section id="real-pipeline-examples">
-<h2>Real pipeline examples<a class="headerlink" href="#real-pipeline-examples" title="Link to this heading">¶</a></h2>
-<p>See how frameguard integrates into production pipeline frameworks:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="airflow.html"><span class="doc">Using frameguard in Airflow</span></a>: validate at load time and at function boundaries in Airflow DAGs</p></li>
-<li><p><a class="reference internal" href="kedro.html"><span class="doc">Using frameguard in Kedro</span></a>: annotate Kedro nodes and let the catalog wire everything</p></li>
-</ul>
+<p>See the <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> for the full walkthrough.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
 <ul>
@@ -348,6 +317,8 @@ designed to be backend-agnostic from the start.</p>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#enforcement">Enforcement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#the-subset-parameter">The subset parameter</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#multi-stage-pipeline">Multi-stage pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#validating-at-load-time">Validating at load time</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#disabling-enforcement">Disabling enforcement</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#schema-history">Schema history</a></li>
 <li class="toctree-l2"><a class="reference internal" href="quickstart.html#sparkschema-utilities">SparkSchema utilities</a></li>
 </ul>
@@ -437,7 +408,6 @@ designed to be backend-agnostic from the start.</p>
             <ul>
 <li><a class="reference internal" href="#">frameguard</a><ul>
 <li><a class="reference internal" href="#two-ways-to-define-a-schema">Two ways to define a schema</a></li>
-<li><a class="reference internal" href="#real-pipeline-examples">Real pipeline examples</a></li>
 </ul>
 </li>
 </ul>

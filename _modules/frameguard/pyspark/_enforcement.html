@@ -256,7 +256,7 @@
 <span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># fg.disable() / fg.enable_enforcement()</span>
-<span class="n">_SUBSET</span>  <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># fg.arm(subset=...) — global default; function-level overrides this</span>
+<span class="n">_SUBSET</span>  <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># fg.arm(subset=...) sets the global default; function-level overrides this</span>
 
 <span class="n">_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>  <span class="c1"># sentinel: &quot;no function-level override, use global&quot;</span>
 
@@ -268,7 +268,7 @@
 <span class="sd">    Any class that exposes a ``_fg_check(value, subset) -&gt; bool`` classmethod</span>
 <span class="sd">    is treated as a schema type. This is the extension point: new DataFrame</span>
 <span class="sd">    backends (pandas, polars, …) just need to add ``_fg_check`` to their</span>
-<span class="sd">    schema class — no changes to enforcement code required.</span>
+<span class="sd">    schema class; no changes to enforcement code required.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;_fg_check&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
 
@@ -280,14 +280,14 @@
 <span class="sd">    Delegates to ``annotation._fg_check(value, subset)`` when available.</span>
 <span class="sd">    The meaning of *subset* is left to each schema type:</span>
 
-<span class="sd">    - ``schema_of`` types (``_TypedDatasetBase``) ignore *subset* — always exact.</span>
+<span class="sd">    - ``schema_of`` types (``_TypedDatasetBase``) ignore *subset*: always exact.</span>
 <span class="sd">    - ``SparkSchema`` types respect *subset*:</span>
-<span class="sd">        - ``True``  — extra columns in *value* are fine.</span>
-<span class="sd">        - ``False`` — *value* must have exactly the declared columns, nothing extra.</span>
+<span class="sd">        - ``True``: extra columns in *value* are fine.</span>
+<span class="sd">        - ``False``: *value* must have exactly the declared columns, nothing extra.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">checker</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="s2">&quot;_fg_check&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">checker</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">checker</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">subset</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">checker</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">subset</span><span class="p">))</span>
     <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>
 
 
@@ -299,7 +299,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">):</span>
             <span class="c1"># Pass _UNSET so each wrapped function reads _SUBSET at call-time,</span>
             <span class="c1"># unless overridden at decoration time by the caller.</span>
-            <span class="n">wrapped</span> <span class="o">=</span> <span class="n">enforce</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">subset</span><span class="o">=</span><span class="n">subset</span><span class="p">)</span>
+            <span class="n">wrapped</span> <span class="o">=</span> <span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="n">subset</span><span class="p">)(</span><span class="n">obj</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">wrapped</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">module_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">wrapped</span>
 
@@ -315,7 +315,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Arm the entire calling package and set the global subset default.</span>
 
-<span class="sd">    Call once — typically in your entry point, ``settings.py``, or ``__init__.py``::</span>
+<span class="sd">    Call once from your entry point, ``__init__.py``, or ``settings.py`` (Kedro)::</span>
 
 <span class="sd">        import frameguard.pyspark as fg</span>
 
@@ -408,22 +408,22 @@
 <span class="sd">    Only intercepts parameters annotated with a ``fg.schema_of`` type or a</span>
 <span class="sd">    ``fg.SparkSchema`` subclass. All other arguments are left completely alone.</span>
 
-<span class="sd">    **Default** — inherits the global ``subset`` set by ``fg.arm()``::</span>
+<span class="sd">    **Default**: inherits the global ``subset`` set by ``fg.arm()``:</span>
 
 <span class="sd">        @fg.enforce</span>
 <span class="sd">        def process(df: OrderSchema, label: str): ...</span>
 
-<span class="sd">    **subset=True** — extra columns in the DataFrame are fine (overrides global)::</span>
+<span class="sd">    **subset=True**: extra columns in the DataFrame are fine (overrides global)::</span>
 
 <span class="sd">        @fg.enforce(subset=True)</span>
 <span class="sd">        def process(df: OrderSchema): ...</span>
 
-<span class="sd">    **subset=False** — DataFrame must match the schema exactly (overrides global)::</span>
+<span class="sd">    **subset=False**: DataFrame must match the schema exactly (overrides global)::</span>
 
 <span class="sd">        @fg.enforce(subset=False)</span>
 <span class="sd">        def process(df: OrderSchema): ...</span>
 
-<span class="sd">    **always=True** — enforces even after ``fg.disable()`` is called::</span>
+<span class="sd">    **always=True**: enforces even after ``fg.disable()`` is called::</span>
 
 <span class="sd">        @fg.enforce(always=True)</span>
 <span class="sd">        def write_to_prod(df: FinalSchema, table: str): ...</span>
