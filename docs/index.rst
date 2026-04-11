@@ -103,8 +103,8 @@ Real pipeline examples
 
 See how frameguard integrates into production pipeline frameworks:
 
-- :doc:`airflow` — validate at load time and at function boundaries in Airflow DAGs
-- :doc:`kedro` — annotate Kedro nodes and let the catalog wire everything
+- :doc:`airflow`: validate at load time and at function boundaries in Airflow DAGs
+- :doc:`kedro`: annotate Kedro nodes and let the catalog wire everything
 
 .. toctree::
    :maxdepth: 2

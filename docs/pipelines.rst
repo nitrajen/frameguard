@@ -8,17 +8,18 @@ reach for in each case.
 Quick reference
 ---------------
 
-+------------------------------------------+------------------------------------------------+
-| What you want                            | What to use                                    |
-+==========================================+================================================+
-| Enforce one function                     | ``@fg.enforce``                                |
-+------------------------------------------+------------------------------------------------+
-| Enforce an entire package from one place | ``fg.arm()`` in settings.py                    |
-+------------------------------------------+------------------------------------------------+
-| Validate a DataFrame right after loading | ``MySchema.assert_valid(df)``                  |
-+------------------------------------------+------------------------------------------------+
-| Turn off enforcement in tests or CI      | ``fg.disable()`` / ``fg.enable_enforcement()`` |
-+------------------------------------------+------------------------------------------------+
++------------------------------------------+--------------------------------------------------+
+| What you want                            | What to use                                      |
++==========================================+==================================================+
+| Enforce one function                     | ``@fg.enforce``                                  |
++------------------------------------------+--------------------------------------------------+
+| Enforce an entire package from one place | ``fg.arm()`` in ``__init__.py`` (Kedro: see      |
+|                                          | :doc:`kedro`)                                    |
++------------------------------------------+--------------------------------------------------+
+| Validate a DataFrame right after loading | ``MySchema.assert_valid(df)``                    |
++------------------------------------------+--------------------------------------------------+
+| Turn off enforcement in tests or CI      | ``fg.disable()`` / ``fg.enable_enforcement()``   |
++------------------------------------------+--------------------------------------------------+
 
 One thing to know before you start
 ------------------------------------
@@ -35,9 +36,14 @@ live DataFrame in hand.
 Kedro
 -----
 
-The recommended structure is: ``fg.SparkSchema`` for every node schema,
-``fg.arm()`` once in ``settings.py``. No decoration on individual functions,
-no imports scattered across every node file.
+`Kedro <https://docs.kedro.org>`_ is a pipeline framework that structures projects
+into nodes, pipelines, and a data catalog. See :doc:`kedro` for a full working
+example with runnable code.
+
+The recommended structure is: ``fg.SparkSchema`` for every node schema, defined
+alongside the functions that use them. ``fg.arm()`` called once in ``settings.py``
+wraps every annotated function in the package automatically, so node functions need
+no ``@fg.enforce`` decorator.
 
 Define schemas and nodes
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -87,8 +93,10 @@ Schemas live alongside the functions that use them.
 Arm everything from settings.py
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Kedro loads ``settings.py`` before any pipeline runs. One call there and
-every node in the package is enforced, with no changes to the node files.
+Kedro loads ``settings.py`` before any pipeline runs. One call there wraps
+every annotated function in the package. Node files keep their schema
+definitions and type annotations; those are the contract. What they do not
+need is the ``@fg.enforce`` decorator on each function.
 
 .. code-block:: python
 
@@ -102,11 +110,16 @@ with a schema annotation, and wraps it. Functions without schema annotations
 are left alone. Arguments that are not DataFrames (``str``, ``int``, etc.)
 inside wrapped functions are also not touched.
 
+Run with:
+
+.. code-block:: bash
+
+   kedro run
+
 What you get
 ~~~~~~~~~~~~~
 
-After ``settings.py`` loads, Kedro's runner calls your nodes normally. The
-wrong DataFrame raises before any Spark work happens:
+The wrong DataFrame raises before any Spark work happens:
 
 .. code-block:: python
 
@@ -130,9 +143,10 @@ wrong DataFrame raises before any Spark work happens:
 Airflow
 -------
 
-Airflow tasks are Python callables. They receive paths or config, create a
-SparkSession inside, do the work, and write the result. DataFrames are never
-passed between tasks directly; only serializable values are.
+`Apache Airflow <https://airflow.apache.org>`_ tasks are Python callables. They
+receive paths or config, create a SparkSession inside, do the work, and write
+the result. DataFrames are never passed between tasks directly; only serializable
+values are. See :doc:`airflow` for a full working example.
 
 This means ``@fg.enforce`` on task functions doesn't buy you much (the args are
 strings, not DataFrames). The useful tools are:
@@ -192,6 +206,14 @@ Validate after loading
 
 ``assert_valid`` raises ``SchemaValidationError`` with a clear message
 listing every missing or mismatched field.
+
+Run with:
+
+.. code-block:: bash
+
+   airflow dags trigger orders_pipeline
+
+Or trigger via the Airflow web UI at ``http://localhost:8080``.
 
 ----
 

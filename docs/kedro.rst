@@ -1,13 +1,15 @@
 Using frameguard in Kedro
 =========================
 
-Kedro is a pipeline framework that structures data projects into nodes,
-pipelines, and a data catalog. A node is a pure Python function; Kedro
-wires inputs and outputs through the catalog.
+`Kedro <https://docs.kedro.org>`_ is a pipeline framework that structures data
+projects into nodes, pipelines, and a data catalog. A node is a pure Python
+function; Kedro wires inputs and outputs through the catalog.
 
-frameguard fits naturally: annotate node functions with ``@fg.enforce`` and
-schema errors surface at the node boundary, before any Spark execution. The
-working example lives at ``examples/kedro/`` in the frameguard repository.
+frameguard fits naturally into Kedro. Schemas live in the node files alongside
+the functions that use them. ``fg.arm()`` in ``settings.py`` arms the entire
+package from one place, so node functions need no ``@fg.enforce`` decorator.
+
+The working example lives at ``examples/kedro/`` in the frameguard repository.
 
 File structure
 --------------
@@ -57,17 +59,19 @@ and consumes.
 nodes.py
 --------
 
-Each node is a plain Python function. ``@fg.enforce`` is the only addition —
-no validation logic inside the function body.
+Each node is a plain Python function with a schema-annotated argument.
+No ``@fg.enforce`` decorator needed; ``fg.arm()`` in ``settings.py``
+handles that for the whole package. No validation logic inside the function body.
 
 .. code-block:: python
 
    # src/orders_pipeline/pipelines/processing/nodes.py
-   import frameguard.pyspark as fg
    from pyspark.sql import functions as F
    from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
-   @fg.enforce
+   # No @fg.enforce needed; fg.arm() in settings.py covers the whole package.
+   # The type annotations on the arguments are the contract.
+
    def enrich_orders(raw: RawOrderSchema):
        return (
            raw
@@ -75,7 +79,6 @@ no validation logic inside the function body.
            .withColumn("is_high_value", F.col("revenue") > 500.0)
        )
 
-   @fg.enforce
    def summarise_by_customer(enriched: EnrichedOrderSchema):
        return (
            enriched
@@ -145,6 +148,12 @@ Running the pipeline
    pip install -e src/
    kedro run
 
+   # Run a specific pipeline
+   kedro run --pipeline processing
+
+   # Run a single node
+   kedro run --node enrich_orders_node
+
 What a schema error looks like
 -------------------------------
 
@@ -161,7 +170,7 @@ frameguard message:
                quantity:int, status:string
 
 If the CSV source adds an unexpected column or changes a type, the error
-appears at the first node that touches that column — not deep in a shuffle or
+appears at the first node that touches that column, not deep in a shuffle or
 aggregation.
 
 Where to define schemas
@@ -182,12 +191,12 @@ one file per domain works well:
    ├── customers.py
    └── products.py
 
-Using fg.arm() instead of @fg.enforce
+Using @fg.enforce instead of fg.arm()
 --------------------------------------
 
-For projects where you want enforcement on every function without adding
-``@fg.enforce`` individually, call ``fg.arm()`` at startup instead. A Kedro
-hook is the right place for this:
+If you prefer explicit decoration over package-wide arming, add ``@fg.enforce``
+to individual node functions instead of calling ``fg.arm()`` in ``settings.py``.
+Both approaches work; the choice is style:
 
 .. code-block:: python
 
@@ -200,20 +209,28 @@ hook is the right place for this:
        def before_pipeline_run(self, run_params, pipeline, catalog):
            fg.arm(package="orders_pipeline.pipelines")
 
-Then register it in ``settings.py``:
-
 .. code-block:: python
 
-   # src/orders_pipeline/settings.py
-   from orders_pipeline.hooks import FrameguardHook
+   # src/orders_pipeline/pipelines/processing/nodes.py  (with explicit decoration)
+   import frameguard.pyspark as fg
+   from pyspark.sql import functions as F
+   from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
-   HOOKS = (FrameguardHook(),)
+   @fg.enforce
+   def enrich_orders(raw: RawOrderSchema):
+       return raw.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
-With this setup, every public function in ``orders_pipeline.pipelines`` is
-automatically wrapped. Node functions need no decorators at all.
+   @fg.enforce
+   def summarise_by_customer(enriched: EnrichedOrderSchema):
+       return enriched.groupBy("customer_id").agg(
+           F.sum("revenue").alias("total_revenue"),
+           F.count("*").alias("order_count"),
+       )
 
-.. note::
-
-   ``@fg.enforce`` on individual nodes is more explicit and easier to reason
-   about. ``fg.arm()`` via hooks is better for large projects where you want
-   blanket coverage without touching every file.
++----------------------------------+--------------------------------------------+
+| ``fg.arm()`` in ``settings.py``  | One call, whole package covered, no        |
+|                                  | decorator on each function                 |
++----------------------------------+--------------------------------------------+
+| ``@fg.enforce`` per function     | Explicit, visible at the function, easier  |
+|                                  | to reason about in isolation               |
++----------------------------------+--------------------------------------------+

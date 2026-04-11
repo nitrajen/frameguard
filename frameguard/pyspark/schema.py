@@ -125,6 +125,21 @@ class SparkSchema(metaclass=_SparkSchemaMeta):
         return actual_names == declared_names
 
     @classmethod
+    def create_dataframe(cls, spark: Any, data: Any) -> Any:
+        """Create a Spark DataFrame from *data* using this schema as the ``StructType``.
+
+        Shorthand for ``spark.createDataFrame(data, MySchema.to_struct())``.
+        Useful in tests and scripts to build typed sample data without repeating
+        the schema definition::
+
+            raw = RawOrderSchema.create_dataframe(spark, [
+                (1, 101, 50.0, 3, "confirmed"),
+                (2, 102, 200.0, 5, "pending"),
+            ])
+        """
+        return spark.createDataFrame(data, cls.to_struct())
+
+    @classmethod
     def to_struct(cls) -> Any:
         """Return the ``StructType`` for this schema. Result is cached after the first call."""
         if cls._cached_struct is not None:  # type: ignore[attr-defined]
