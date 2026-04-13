@@ -5,4 +5,4 @@ Backends are imported lazily so installing dfguard does not require
 any dataframe library to be present.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

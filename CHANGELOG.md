@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/nitrajen/dfguard/compare/v0.2.0...v0.2.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* clear notebook outputs to remove personal info ([a13af20](https://github.com/nitrajen/dfguard/commit/a13af2098f6b9b4e73bf0a002a97db67109def45))
+* clear notebook outputs to remove personal info from execution ([813ce79](https://github.com/nitrajen/dfguard/commit/813ce790d9023e13e2e5926fb7a068aaa331226a))
+
 ## [0.2.0](https://github.com/nitrajen/dfguard/compare/v0.1.2...v0.2.0) (2026-04-13)
 
 
