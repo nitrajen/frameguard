@@ -8,8 +8,8 @@ with an error that tells you nothing about where the mismatch started.
 **dfguard moves that failure to the function call.** The wrong DataFrame is
 rejected immediately with a precise error: which function, which argument, what
 schema was expected, what arrived. **Lightweight**: enforcement is pure metadata
-inspection — dfguard reads the schema struct from your DataFrame, no data is
-scanned, no Spark jobs are triggered. Unlike pandera, which introduces its own
+inspection: dfguard reads the schema struct from your DataFrame, no data is
+scanned, no Spark jobs are triggered. Unlike `pandera <https://pandera.readthedocs.io/en/stable/>`_, which introduces its own
 type system, dfguard uses the types your library already ships with:
 ``T.LongType()`` for PySpark, ``pl.Int64`` for Polars, ``np.dtype("int64")``
 for pandas.
@@ -180,11 +180,19 @@ No boilerplate. The schema is locked to that DataFrame's shape at that moment.
 
       .. code-block:: python
 
-         class OrderSchema(dfg.SparkSchema):
-             order_id = T.LongType()
-             amount   = T.DoubleType()
+         from dfguard.pyspark import Optional
 
-         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+         class OrderSchema(dfg.SparkSchema):
+             order_id   = T.LongType()
+             amount     = T.DoubleType()
+             line_items = T.ArrayType(T.StructType([       # array of structs
+                 T.StructField("sku",      T.StringType()),
+                 T.StructField("quantity", T.IntegerType()),
+                 T.StructField("price",    T.DoubleType()),
+             ]))
+             zip_code   = Optional[T.StringType()]         # nullable field
+
+         class EnrichedSchema(OrderSchema):                # inherits all parent fields
              revenue = T.DoubleType()
 
    .. tab-item:: pandas
@@ -192,11 +200,20 @@ No boilerplate. The schema is locked to that DataFrame's shape at that moment.
 
       .. code-block:: python
 
-         class OrderSchema(dfg.PandasSchema):
-             order_id = np.dtype("int64")
-             amount   = np.dtype("float64")
+         import pyarrow as pa
+         from dfguard.pandas import Optional
 
-         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+         class OrderSchema(dfg.PandasSchema):
+             order_id   = np.dtype("int64")
+             amount     = np.dtype("float64")
+             line_items = pd.ArrowDtype(pa.list_(pa.struct([  # nested via PyArrow
+                 pa.field("sku",      pa.string()),
+                 pa.field("quantity", pa.int32()),
+                 pa.field("price",    pa.float64()),
+             ])))
+             zip_code   = Optional[pd.StringDtype()]           # nullable field
+
+         class EnrichedSchema(OrderSchema):                    # inherits all parent fields
              revenue = np.dtype("float64")
 
    .. tab-item:: Polars
@@ -204,15 +221,24 @@ No boilerplate. The schema is locked to that DataFrame's shape at that moment.
 
       .. code-block:: python
 
-         class OrderSchema(dfg.PolarsSchema):
-             order_id = pl.Int64
-             amount   = pl.Float64
+         from dfguard.polars import Optional
 
-         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+         class OrderSchema(dfg.PolarsSchema):
+             order_id   = pl.Int64
+             amount     = pl.Float64
+             line_items = pl.List(pl.Struct({               # list of structs
+                 "sku":      pl.String,
+                 "quantity": pl.Int32,
+                 "price":    pl.Float64,
+             }))
+             zip_code   = Optional[pl.String]               # nullable field
+
+         class EnrichedSchema(OrderSchema):                 # inherits all parent fields
              revenue = pl.Float64
 
 No live DataFrame needed. Subclasses inherit parent fields. Supports complex
-nested types. Works with IDE autocomplete and static analysis.
+nested types. The schema class is a regular Python class: go-to-definition and
+class-level navigation work in your IDE.
 
 **For data pipelines, Option B is preferred.** Schemas are defined once,
 shared across modules, visible in version control, and discoverable by your
