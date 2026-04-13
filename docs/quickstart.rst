@@ -975,7 +975,7 @@ Schema utilities
              order_id = np.dtype("int64")
              amount   = np.dtype("float64")
 
-         # Create an empty DataFrame with the right schema (useful in tests and pipelines)
+         # Create an empty DataFrame with the right schema (useful in tests)
          empty_df = OrderSchema.empty()
 
          # Build a schema class from a dtype dict
@@ -991,13 +991,6 @@ Schema utilities
          # class OrderSchema(dfg.PandasSchema):
          #     order_id = np.dtype('int64')
          #     amount   = np.dtype('float64')
-
-      .. note::
-
-         ``empty()`` works for all dtype categories: ``np.dtype``, pandas extension
-         dtypes (``pd.StringDtype()``, ``pd.Int64Dtype()``), and ``pd.ArrowDtype``
-         nested types. For creating a DataFrame with actual data, build it normally
-         and validate with ``OrderSchema.assert_valid(df)``.
 
    .. tab-item:: Polars
       :sync: polars
