@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.5](https://github.com/nitrajen/dfguard/compare/v0.2.4...v0.2.5) (2026-04-13)
+
+
+### Documentation
+
+* clarify dataset() as internal utility with accurate tracked method lists ([1e36472](https://github.com/nitrajen/dfguard/commit/1e36472f37785d45d6a90745d7c8fa8566ad9b82))
+* pandas/polars backends, quickstart tab-sets, dataset utility clarification ([e2cf6e1](https://github.com/nitrajen/dfguard/commit/e2cf6e1813c7b4f3fa3ec6cb0ddd799db1792507))
+
 ## [0.2.4](https://github.com/nitrajen/dfguard/compare/v0.2.3...v0.2.4) (2026-04-13)
 
 
