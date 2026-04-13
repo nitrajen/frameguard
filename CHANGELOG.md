@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/nitrajen/dfguard/compare/v0.2.2...v0.2.3) (2026-04-13)
+
+
+### Bug Fixes
+
+* line too long in polars schema test ([475943e](https://github.com/nitrajen/dfguard/commit/475943e67378cea58cd283a1dfc585c4d3f32a92))
+
 ## [0.2.2](https://github.com/nitrajen/dfguard/compare/v0.2.1...v0.2.2) (2026-04-13)
 
 
