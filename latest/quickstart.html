@@ -247,10 +247,10 @@
         <article role="main" id="furo-main-content">
           <section id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h1>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>pyspark<span class="o">]</span><span class="w">   </span><span class="c1"># PySpark</span>
-pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>pandas<span class="o">]</span><span class="w">    </span><span class="c1"># pandas</span>
-pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>polars<span class="o">]</span><span class="w">    </span><span class="c1"># Polars</span>
-pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>all<span class="o">]</span><span class="w">       </span><span class="c1"># all backends</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;dfguard[pyspark]&#39;</span><span class="w">            </span><span class="c1"># PySpark</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;dfguard[pandas]&#39;</span><span class="w"> </span>pyarrow<span class="w">    </span><span class="c1"># pandas (pyarrow recommended for nested types)</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;dfguard[polars]&#39;</span><span class="w">            </span><span class="c1"># Polars</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;dfguard[all]&#39;</span><span class="w">               </span><span class="c1"># all backends</span>
 </pre></div>
 </div>
 <p>Requires Python &gt;= 3.10.</p>
@@ -405,7 +405,7 @@ pandas</label><div class="sd-tab-content docutils">
 structs, and maps at arbitrary depth, the same as PySpark and Polars.
 Without PyArrow, pandas dtype enforcement is limited to flat scalar types
 (<code class="docutils literal notranslate"><span class="pre">np.dtype</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.StringDtype</span></code>, etc.). Install with
-<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dfguard[pandas]</span> <span class="pre">pyarrow</span></code>.</p>
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'dfguard[pandas]'</span> <span class="pre">pyarrow</span></code>.</p>
 <p>Use <code class="docutils literal notranslate"><span class="pre">Optional</span></code> from <code class="docutils literal notranslate"><span class="pre">dfguard.pandas</span></code> to mark a field nullable in the
 schema declaration. Null values in the data are not checked: dfguard reads
 schema metadata only, not data.</p>

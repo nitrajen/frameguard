@@ -3,10 +3,10 @@ Quickstart
 
 .. code-block:: bash
 
-   pip install dfguard[pyspark]   # PySpark
-   pip install dfguard[pandas]    # pandas
-   pip install dfguard[polars]    # Polars
-   pip install dfguard[all]       # all backends
+   pip install 'dfguard[pyspark]'            # PySpark
+   pip install 'dfguard[pandas]' pyarrow    # pandas (pyarrow recommended for nested types)
+   pip install 'dfguard[polars]'            # Polars
+   pip install 'dfguard[all]'               # all backends
 
 Requires Python >= 3.10.
 
@@ -170,7 +170,7 @@ parent fields. All three backends support nested types fully.
          structs, and maps at arbitrary depth, the same as PySpark and Polars.
          Without PyArrow, pandas dtype enforcement is limited to flat scalar types
          (``np.dtype``, ``pd.StringDtype``, etc.). Install with
-         ``pip install dfguard[pandas] pyarrow``.
+         ``pip install 'dfguard[pandas]' pyarrow``.
 
          Use ``Optional`` from ``dfguard.pandas`` to mark a field nullable in the
          schema declaration. Null values in the data are not checked: dfguard reads
