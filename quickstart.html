@@ -1184,19 +1184,15 @@ pandas</label><div class="sd-tab-content docutils">
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 
-<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
-    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
-<span class="p">})</span>
-
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
     <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
     <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
 
-<span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
+<span class="c1"># Create an empty DataFrame with the right schema (useful in tests and pipelines)</span>
 <span class="n">empty_df</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
 
 <span class="c1"># Build a schema class from a dtype dict</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">10.0</span><span class="p">]})</span>
 <span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
 
 <span class="c1"># Generate copy-pasteable Python source for a schema</span>
@@ -1210,6 +1206,13 @@ pandas</label><div class="sd-tab-content docutils">
 <span class="c1">#     amount   = np.dtype(&#39;float64&#39;)</span>
 </pre></div>
 </div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">empty()</span></code> works for all dtype categories: <code class="docutils literal notranslate"><span class="pre">np.dtype</span></code>, pandas extension
+dtypes (<code class="docutils literal notranslate"><span class="pre">pd.StringDtype()</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.Int64Dtype()</span></code>), and <code class="docutils literal notranslate"><span class="pre">pd.ArrowDtype</span></code>
+nested types. For creating a DataFrame with actual data, build it normally
+and validate with <code class="docutils literal notranslate"><span class="pre">OrderSchema.assert_valid(df)</span></code>.</p>
+</div>
 </div>
 <input id="sd-tab-item-32" name="sd-tab-set-10" type="radio">
 <label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-32">
@@ -1217,23 +1220,25 @@ Polars</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 
-<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
-    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
-    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
-<span class="p">})</span>
-
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
-    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
-    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">Struct</span><span class="p">({</span><span class="s2">&quot;sku&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">}))</span>
+
+<span class="c1"># Pass to_struct() directly to pl.DataFrame — works for nested types too</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">[{</span><span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="mf">99.0</span><span class="p">,</span> <span class="s2">&quot;line_items&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;sku&quot;</span><span class="p">:</span> <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="s2">&quot;price&quot;</span><span class="p">:</span> <span class="mf">9.99</span><span class="p">}]}],</span>
+    <span class="n">schema</span><span class="o">=</span><span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">(),</span>
+<span class="p">)</span>
 
 <span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
 <span class="n">empty_df</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
 
 <span class="c1"># Build a schema class from a schema dict</span>
-<span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
+<span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
 
 <span class="c1"># Generate copy-pasteable Python source for a schema</span>
-<span class="n">Schema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OrderSchema&quot;</span><span class="p">)</span>
+<span class="n">Schema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OrderSchema&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">to_code</span><span class="p">())</span>
 <span class="c1"># import polars as pl</span>
 <span class="c1"># import dfguard.polars as dfg</span>
@@ -1241,6 +1246,7 @@ Polars</label><div class="sd-tab-content docutils">
 <span class="c1"># class OrderSchema(dfg.PolarsSchema):</span>
 <span class="c1">#     order_id = pl.Int64</span>
 <span class="c1">#     amount   = pl.Float64</span>
+<span class="c1">#     ...</span>
 </pre></div>
 </div>
 </div>

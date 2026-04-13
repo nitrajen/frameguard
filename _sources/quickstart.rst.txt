@@ -971,19 +971,15 @@ Schema utilities
          import pandas as pd
          import dfguard.pandas as dfg
 
-         raw_df = pd.DataFrame({
-             "order_id": pd.array([1], dtype="int64"),
-             "amount":   pd.array([10.0], dtype="float64"),
-         })
-
          class OrderSchema(dfg.PandasSchema):
              order_id = np.dtype("int64")
              amount   = np.dtype("float64")
 
-         # Create an empty DataFrame with the right schema (useful in tests)
+         # Create an empty DataFrame with the right schema (useful in tests and pipelines)
          empty_df = OrderSchema.empty()
 
          # Build a schema class from a dtype dict
+         raw_df = pd.DataFrame({"order_id": [1], "amount": [10.0]})
          Discovered = dfg.PandasSchema.from_struct(dict(raw_df.dtypes), name="Discovered")
 
          # Generate copy-pasteable Python source for a schema
@@ -996,6 +992,13 @@ Schema utilities
          #     order_id = np.dtype('int64')
          #     amount   = np.dtype('float64')
 
+      .. note::
+
+         ``empty()`` works for all dtype categories: ``np.dtype``, pandas extension
+         dtypes (``pd.StringDtype()``, ``pd.Int64Dtype()``), and ``pd.ArrowDtype``
+         nested types. For creating a DataFrame with actual data, build it normally
+         and validate with ``OrderSchema.assert_valid(df)``.
+
    .. tab-item:: Polars
       :sync: polars
 
@@ -1004,23 +1007,25 @@ Schema utilities
          import polars as pl
          import dfguard.polars as dfg
 
-         raw_df = pl.DataFrame({
-             "order_id": pl.Series([1], dtype=pl.Int64),
-             "amount":   pl.Series([10.0], dtype=pl.Float64),
-         })
-
          class OrderSchema(dfg.PolarsSchema):
-             order_id = pl.Int64
-             amount   = pl.Float64
+             order_id   = pl.Int64
+             amount     = pl.Float64
+             line_items = pl.List(pl.Struct({"sku": pl.String, "price": pl.Float64}))
+
+         # Pass to_struct() directly to pl.DataFrame — works for nested types too
+         df = pl.DataFrame(
+             [{"order_id": 1, "amount": 99.0, "line_items": [{"sku": "A", "price": 9.99}]}],
+             schema=OrderSchema.to_struct(),
+         )
 
          # Create an empty DataFrame with the right schema (useful in tests)
          empty_df = OrderSchema.empty()
 
          # Build a schema class from a schema dict
-         Discovered = dfg.PolarsSchema.from_struct(dict(raw_df.schema), name="Discovered")
+         Discovered = dfg.PolarsSchema.from_struct(dict(df.schema), name="Discovered")
 
          # Generate copy-pasteable Python source for a schema
-         Schema = dfg.PolarsSchema.from_struct(dict(raw_df.schema), name="OrderSchema")
+         Schema = dfg.PolarsSchema.from_struct(dict(df.schema), name="OrderSchema")
          print(Schema.to_code())
          # import polars as pl
          # import dfguard.polars as dfg
@@ -1028,3 +1033,4 @@ Schema utilities
          # class OrderSchema(dfg.PolarsSchema):
          #     order_id = pl.Int64
          #     amount   = pl.Float64
+         #     ...
