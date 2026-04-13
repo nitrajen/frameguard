@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.2.1](https://github.com/nitrajen/dfguard/compare/v0.2.0...v0.2.1) (2026-04-13)
+
+
+### Bug Fixes
+
+* clear notebook outputs to remove personal info ([a13af20](https://github.com/nitrajen/dfguard/commit/a13af2098f6b9b4e73bf0a002a97db67109def45))
+* clear notebook outputs to remove personal info from execution ([813ce79](https://github.com/nitrajen/dfguard/commit/813ce790d9023e13e2e5926fb7a068aaa331226a))
+
+## [0.2.0](https://github.com/nitrajen/dfguard/compare/v0.1.2...v0.2.0) (2026-04-13)
+
+
+### Features
+
+* add pandas and polars backends ([9fa35cf](https://github.com/nitrajen/dfguard/commit/9fa35cfddae75a575c054e1c10d74d7a17f6ddaa))
+* add pandas and polars backends, versioned docs, notebook examples ([f8268a5](https://github.com/nitrajen/dfguard/commit/f8268a54001642c6b1555f9e8b2b68f841d8d3db))
+
+
+### Bug Fixes
+
+* remove empty html_static_path causing docs build warning ([7624f58](https://github.com/nitrajen/dfguard/commit/7624f58e0bf88ca5cb5fd156abb4e686c1c06ebb))
+
+
+### Documentation
+
+* add nested type examples and PyArrow note to README ([b5cec50](https://github.com/nitrajen/dfguard/commit/b5cec50316c5ae5505429a984757b20998c6f743))
+* add nested type examples and PyArrow note to README ([ac93cbf](https://github.com/nitrajen/dfguard/commit/ac93cbff33ae76e120516b22bc3f5504b1dea7ae))
+
+## [0.1.2](https://github.com/nitrajen/dfguard/compare/v0.1.1...v0.1.2) (2026-04-11)
+
+
+### Bug Fixes
+
+* pass CODECOV_TOKEN as action input not env var ([9d7fed9](https://github.com/nitrajen/dfguard/commit/9d7fed9c0f250f6bed1509c31a0da6a5fdf2be6d))
+* revert to direct Codecov badge URL ([8628226](https://github.com/nitrajen/dfguard/commit/8628226f40b29fba26e45d312179ab38fb61ba61))
+* use shields.io for coverage badge ([24be83d](https://github.com/nitrajen/dfguard/commit/24be83d57532010421136a00088f9d54e8710c40))
+* use shields.io for coverage badge (100% coverage) ([fef27ea](https://github.com/nitrajen/dfguard/commit/fef27eae6a4cbd84721f5988d1953890e7040250))
+
 ## [0.1.1](https://github.com/nitrajen/dfguard/compare/v0.1.0...v0.1.1) (2026-04-11)
 
 
