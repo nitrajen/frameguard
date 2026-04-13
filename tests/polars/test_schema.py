@@ -208,7 +208,8 @@ class StructSchema(PolarsSchema):
 
 def test_nested_struct_coverage():
     """to_struct, pl.DataFrame(schema=...), and empty() all work for nested Struct types."""
-    assert StructSchema.to_struct()["address"] == pl.Struct({"street": pl.String, "city": pl.String})
+    expected = pl.Struct({"street": pl.String, "city": pl.String})
+    assert StructSchema.to_struct()["address"] == expected
 
     df_data = pl.DataFrame(
         [{"order_id": 1, "address": {"street": "Main St", "city": "Austin"}}],
