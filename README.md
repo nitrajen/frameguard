@@ -29,6 +29,17 @@ Data pipelines fail late. A DataFrame with the wrong schema enters a function wi
 | pandas  | >= 1.5  | >= 3.10 |
 | Polars  | >= 0.20 | >= 3.10 |
 
+## Install
+
+```bash
+pip install 'dfguard[pyspark]'            # PySpark
+pip install 'dfguard[pandas]' pyarrow    # pandas (pyarrow recommended for nested types)
+pip install 'dfguard[polars]'            # Polars
+pip install 'dfguard[all]'               # all backends
+```
+
+Requires Python >= 3.10. No other mandatory dependencies.
+
 ---
 
 <!-- tabs-start -->
@@ -138,19 +149,6 @@ flag_high_value(raw_df)
 No validation logic inside functions. The wrong DataFrame simply cannot enter the wrong function.
 
 For package-wide enforcement without decorating each function, call `dfg.arm()` once from your package entry point.
-
----
-
-## Install
-
-```bash
-pip install 'dfguard[pyspark]'            # PySpark
-pip install 'dfguard[pandas]' pyarrow    # pandas (pyarrow recommended for nested types)
-pip install 'dfguard[polars]'            # Polars
-pip install 'dfguard[all]'               # all backends
-```
-
-Requires Python >= 3.10. No other mandatory dependencies.
 
 ---
 
