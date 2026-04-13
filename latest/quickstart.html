@@ -261,23 +261,6 @@ on GitHub:</p>
 <li><p><a class="reference external" href="https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/pandas_quickstart.ipynb">pandas quickstart notebook</a></p></li>
 <li><p><a class="reference external" href="https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/polars_quickstart.ipynb">Polars quickstart notebook</a></p></li>
 </ul>
-<p>The page below uses PySpark examples throughout. The API is identical across
-all backends: replace <code class="docutils literal notranslate"><span class="pre">dfguard.pyspark</span></code> with <code class="docutils literal notranslate"><span class="pre">dfguard.pandas</span></code> or
-<code class="docutils literal notranslate"><span class="pre">dfguard.polars</span></code>, and use the types your library ships with.</p>
-<p>All examples on this page assume the following setup:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
-
-<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
-
-<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
-    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
-    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
-</pre></div>
-</div>
 <section id="defining-a-schema-type">
 <h2>Defining a schema type<a class="headerlink" href="#defining-a-schema-type" title="Link to this heading">¶</a></h2>
 <p>There are two approaches. Choose based on whether you have a live DataFrame at
@@ -286,40 +269,96 @@ definition time.</p>
 <h3>dfg.schema_of(df): exact snapshot<a class="headerlink" href="#dfg-schema-of-df-exact-snapshot" title="Link to this heading">¶</a></h3>
 <p>Captures the schema of a real DataFrame and returns it as a Python type class.
 Assign in PascalCase. It is a type, not a value.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># raw_df and enriched_df defined in setup above</span>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-0">
+PySpark</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)],</span>
+    <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
 <span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>       <span class="c1"># exact: same columns, same types, nothing extra</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>  <span class="c1"># new type after adding revenue column</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-1">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">raw_df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">raw_df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
+
+<span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>       <span class="c1"># exact snapshot</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>  <span class="c1"># new type after adding revenue column</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-2" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-2">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">raw_df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
+<span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>       <span class="c1"># exact snapshot</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>  <span class="c1"># new type after adding revenue column</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p>The isinstance check is <strong>exact</strong>: a DataFrame with extra columns does <em>not</em>
 satisfy <code class="docutils literal notranslate"><span class="pre">RawSchema</span></code>. Capture a new type at each stage boundary.</p>
 </section>
-<section id="dfg-sparkschema-upfront-declaration">
-<h3>dfg.SparkSchema: upfront declaration<a class="headerlink" href="#dfg-sparkschema-upfront-declaration" title="Link to this heading">¶</a></h3>
-<p>Declare the schema as a class. No live DataFrame needed.</p>
+<section id="upfront-declaration">
+<h3>Upfront declaration<a class="headerlink" href="#upfront-declaration" title="Link to this heading">¶</a></h3>
+<p>Declare the schema as a class. No live DataFrame needed. Subclasses inherit
+parent fields. All three backends support nested types fully.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-3">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
 <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
 
-<span class="c1"># Nested struct: AddressSchema is used as a field type inside OrderSchema</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">AddressSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">street</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()</span>
-    <span class="n">city</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()</span>
-    <span class="nb">zip</span><span class="p">:</span>    <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()]</span>   <span class="c1"># nullable field</span>
-
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
-    <span class="n">address</span><span class="p">:</span>  <span class="n">AddressSchema</span>            <span class="c1"># nested struct</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">([</span>       <span class="c1"># array of structs</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;sku&quot;</span><span class="p">,</span>      <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()),</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>    <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()),</span>
+    <span class="p">]))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()]</span>         <span class="c1"># nullable field</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>    <span class="c1"># inherits all OrderSchema fields</span>
-    <span class="n">revenue</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                <span class="c1"># inherits all parent fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
-<span class="c1"># Use the schema directly when creating a DataFrame (no manual StructType needed)</span>
+<span class="c1"># Use the schema when creating a DataFrame</span>
 <span class="n">order_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
-    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">99.0</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;123 Main St&quot;</span><span class="p">,</span> <span class="s2">&quot;Austin&quot;</span><span class="p">,</span> <span class="s2">&quot;78701&quot;</span><span class="p">))],</span>
+    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">99.0</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;SKU-1&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mf">19.99</span><span class="p">)],</span> <span class="s2">&quot;78701&quot;</span><span class="p">)],</span>
     <span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">(),</span>
 <span class="p">)</span>
 
@@ -328,28 +367,97 @@ satisfy <code class="docutils literal notranslate"><span class="pre">RawSchema</
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>For nullable fields, use <code class="docutils literal notranslate"><span class="pre">Optional</span></code> imported from <code class="docutils literal notranslate"><span class="pre">dfguard.pyspark</span></code>, not from
-<code class="docutils literal notranslate"><span class="pre">typing</span></code>. PySpark <code class="docutils literal notranslate"><span class="pre">DataType</span></code> instances are not Python classes, and <code class="docutils literal notranslate"><span class="pre">typing.Optional</span></code>
-raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> on Python 3.10 with non-class arguments. <code class="docutils literal notranslate"><span class="pre">dfguard.pyspark.Optional</span></code>
-is a drop-in replacement that works on all supported Python versions.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Optional</span></code> from <code class="docutils literal notranslate"><span class="pre">dfguard.pyspark</span></code>, not from <code class="docutils literal notranslate"><span class="pre">typing</span></code>. PySpark
+<code class="docutils literal notranslate"><span class="pre">DataType</span></code> instances are not Python classes and <code class="docutils literal notranslate"><span class="pre">typing.Optional</span></code>
+raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code> on Python 3.10 with non-class arguments.</p>
+<p><code class="docutils literal notranslate"><span class="pre">Optional</span></code> marks the field <code class="docutils literal notranslate"><span class="pre">nullable=True</span></code> in the schema metadata.
+<code class="docutils literal notranslate"><span class="pre">assert_valid</span></code> checks that the nullable flag matches between schemas.
+Null values in the data are not checked: dfguard reads schema metadata only,
+not data.</p>
+</div>
+</div>
+<input id="sd-tab-item-4" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-4">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pa</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">ArrowDtype</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">list_</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">struct</span><span class="p">([</span>  <span class="c1"># nested via PyArrow</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;sku&quot;</span><span class="p">,</span>      <span class="n">pa</span><span class="o">.</span><span class="n">string</span><span class="p">()),</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">int32</span><span class="p">()),</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>    <span class="n">pa</span><span class="o">.</span><span class="n">float64</span><span class="p">()),</span>
+    <span class="p">])))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()]</span>           <span class="c1"># nullable field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                    <span class="c1"># inherits all parent fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">pd.ArrowDtype</span></code> gives pandas full nested-type enforcement: arrays,
+structs, and maps at arbitrary depth, the same as PySpark and Polars.
+Without PyArrow, pandas dtype enforcement is limited to flat scalar types
+(<code class="docutils literal notranslate"><span class="pre">np.dtype</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.StringDtype</span></code>, etc.). Install with
+<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dfguard[pandas]</span> <span class="pre">pyarrow</span></code>.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Optional</span></code> from <code class="docutils literal notranslate"><span class="pre">dfguard.pandas</span></code> to mark a field nullable in the
+schema declaration. Null values in the data are not checked: dfguard reads
+schema metadata only, not data.</p>
+</div>
+</div>
+<input id="sd-tab-item-5" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-5">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">Struct</span><span class="p">({</span>               <span class="c1"># list of structs</span>
+        <span class="s2">&quot;sku&quot;</span><span class="p">:</span>      <span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">,</span>
+        <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">,</span>
+        <span class="s2">&quot;price&quot;</span><span class="p">:</span>    <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">,</span>
+    <span class="p">}))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">]</span>               <span class="c1"># nullable field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                 <span class="c1"># inherits all parent fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Optional</span></code> from <code class="docutils literal notranslate"><span class="pre">dfguard.polars</span></code> to mark a field nullable in the
+schema declaration. Null values in the data are not checked: dfguard reads
+schema metadata only, not data.</p>
+</div>
+</div>
 </div>
 </section>
 <section id="choosing-between-the-two">
 <h3>Choosing between the two<a class="headerlink" href="#choosing-between-the-two" title="Link to this heading">¶</a></h3>
-<p>Use <code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> when you have a live DataFrame and want an exact runtime snapshot of that stage. Use <code class="docutils literal notranslate"><span class="pre">dfg.SparkSchema</span></code> when you want to declare the contract upfront without needing a DataFrame – better for shared schemas, Kedro nodes, and IDE support.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> when you have a live DataFrame and want an exact
+runtime snapshot of that stage. Use the class form when you want to declare the
+contract upfront without needing a DataFrame: better for shared schemas, nodes,
+and IDE support.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p><strong>IDE and mypy support</strong></p>
-<p><code class="docutils literal notranslate"><span class="pre">dfg.SparkSchema</span></code> subclasses are regular Python classes, so VSCode, PyRight,
-and mypy all understand them fully. Hover-over works, go-to-definition works,
-and <code class="docutils literal notranslate"><span class="pre">isinstance</span></code> checks are statically verified.</p>
-<p><code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> types are created at runtime from a live DataFrame, so
-static tools see them as <code class="docutils literal notranslate"><span class="pre">type[_TypedDatasetBase]</span></code> rather than a named
-schema. The runtime enforcement still works perfectly, but mypy will not
-know the specific column names.</p>
-<p><strong>If IDE and mypy support matters to you, prefer ``dfg.SparkSchema``.</strong>
-Use <code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> when you want a quick runtime snapshot and static
-analysis is not a priority for that function.</p>
+<p><strong>IDE navigation</strong></p>
+<p>The schema class is a regular Python class: go-to-definition works on the
+class name and its fields are visible in the class body. That is the extent
+of static tool support. The annotation <code class="docutils literal notranslate"><span class="pre">df:</span> <span class="pre">RawSchema</span></code> on a function
+parameter does not give you column-level autocomplete on <code class="docutils literal notranslate"><span class="pre">df</span></code>, and mypy
+does not understand the column names or types. Schema enforcement is a
+runtime concern.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> types are created at runtime, so static tools have
+no information about them at all.</p>
 </div>
 </section>
 </section>
@@ -360,8 +468,12 @@ analysis is not a priority for that function.</p>
 <h3><code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> per function<a class="headerlink" href="#dfg-enforce-per-function" title="Link to this heading">¶</a></h3>
 <p>Decorate individual functions. Use this in scripts, notebooks, and any place
 where you want explicit, visible contracts.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-6" name="sd-tab-set-2" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-6">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
 <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
 <span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
@@ -377,13 +489,63 @@ where you want explicit, visible contracts.</p>
 <span class="k">def</span><span class="w"> </span><span class="nf">write_final</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span> <span class="o">...</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-7" name="sd-tab-set-2" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-7">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="n">RawSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                    <span class="c1"># subset=True by default</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>      <span class="c1"># exact match required for this function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_final</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-8" name="sd-tab-set-2" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-8">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">),</span>
+<span class="p">})</span>
+<span class="n">RawSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                    <span class="c1"># subset=True by default</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>      <span class="c1"># exact match required for this function</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_final</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="o">...</span>
+</pre></div>
+</div>
+</div>
+</div>
 </section>
 <section id="dfg-arm-whole-package">
 <h3><code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> whole package<a class="headerlink" href="#dfg-arm-whole-package" title="Link to this heading">¶</a></h3>
 <p>Call once from your package <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> or entry point. It walks the entire
-package and wraps every annotated public function automatically. Functions with
-schema-annotated arguments are enforced automatically – no <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code>
-decorator needed on each one.</p>
+package and wraps every annotated public function automatically. No
+<code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> decorator needed on each function.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-9" name="sd-tab-set-3" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-9">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/__init__.py</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 
@@ -396,9 +558,9 @@ decorator needed on each one.</p>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
-    <span class="n">quantity</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>   <span class="c1"># enforced by dfg.arm(), no decorator needed</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
@@ -407,22 +569,73 @@ decorator needed on each one.</p>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">dropDuplicates</span><span class="p">([</span><span class="s2">&quot;order_id&quot;</span><span class="p">])</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-10" name="sd-tab-set-3" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-10">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/__init__.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>                 <span class="c1"># subset=True globally (default)</span>
+<span class="c1"># dfg.arm(subset=False)   # exact match everywhere</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/nodes.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>   <span class="c1"># enforced by dfg.arm(), no decorator needed</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>    <span class="c1"># also enforced</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;order_id&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-11" name="sd-tab-set-3" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-11">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/__init__.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>                 <span class="c1"># subset=True globally (default)</span>
+<span class="c1"># dfg.arm(subset=False)   # exact match everywhere</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># my_pipeline/nodes.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int32</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>   <span class="c1"># enforced by dfg.arm(), no decorator needed</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">clean</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>    <span class="c1"># also enforced</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;order_id&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p><code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> has no effect when a module is run directly as a script
 (<code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">nodes.py</span></code>).</p>
 <p>The reason: <code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> works by walking Python’s module registry. When you
 run a file as a script, Python loads it as <code class="docutils literal notranslate"><span class="pre">__main__</span></code>, not under its package
-name (e.g. <code class="docutils literal notranslate"><span class="pre">my_pipeline.nodes</span></code>). So <code class="docutils literal notranslate"><span class="pre">dfg.arm(package=&quot;my_pipeline&quot;)</span></code> finds
-no modules to wrap. <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> works in scripts because it is applied
-directly to the function at definition time, before any module name matters.</p>
-<p>Use <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> in scripts and notebooks.</p>
+name. Use <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> in scripts and notebooks.</p>
 </div>
 <p>For pipeline framework integration see <a class="reference internal" href="kedro.html"><span class="doc">Using dfguard in Kedro</span></a> and <a class="reference internal" href="airflow.html"><span class="doc">Using dfguard in Airflow</span></a>.</p>
-<p>To turn off all enforcement globally – for example in tests or non-production
-environments – call <code class="docutils literal notranslate"><span class="pre">dfg.disarm()</span></code>. This silences every guarded function,
-whether wrapped by <code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> or decorated with <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code>. Call
-<code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> again to re-enable. See <a class="reference internal" href="#disabling-enforcement">Disabling enforcement</a> below.</p>
+<p>To turn off all enforcement globally, call <code class="docutils literal notranslate"><span class="pre">dfg.disarm()</span></code>. See
+<a class="reference internal" href="#disabling-enforcement">Disabling enforcement</a> below.</p>
 </section>
 </section>
 <section id="the-subset-parameter">
@@ -432,14 +645,18 @@ whether wrapped by <code class="docutils literal notranslate"><span class="pre">
 <li><p><strong>subset=True</strong>: all declared columns must be present with correct types; extra columns are fine.</p></li>
 <li><p><strong>subset=False</strong>: declared columns must be present and no extras are allowed.</p></li>
 </ul>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-12" name="sd-tab-set-4" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-12">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
 <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
 <span class="c1"># enriched_df has an extra &#39;revenue&#39; column</span>
 <span class="n">enriched_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
@@ -460,9 +677,78 @@ whether wrapped by <code class="docutils literal notranslate"><span class="pre">
 <span class="c1">#   received: order_id:bigint, amount:double, revenue:double</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-13" name="sd-tab-set-4" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-13">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+
+<span class="c1"># enriched_df has an extra &#39;revenue&#39; column</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">99.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;revenue&quot;</span><span class="p">:</span>  <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">300.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># default: extra columns are fine</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>       <span class="c1"># strict: no extra columns allowed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="n">process</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes</span>
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: &#39;revenue&#39; is not in OrderSchema</span>
+<span class="c1"># TypeError: Schema mismatch in write_orders() argument &#39;df&#39;:</span>
+<span class="c1">#   expected: order_id:int64, amount:float64</span>
+<span class="c1">#   received: order_id:int64, amount:float64, revenue:float64</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-14" name="sd-tab-set-4" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-14">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+
+<span class="c1"># enriched_df has an extra &#39;revenue&#39; column</span>
+<span class="n">enriched_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">99.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+    <span class="s2">&quot;revenue&quot;</span><span class="p">:</span>  <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">300.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># default: extra columns are fine</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>       <span class="c1"># strict: no extra columns allowed</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="n">process</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes</span>
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: &#39;revenue&#39; is not in OrderSchema</span>
+<span class="c1"># TypeError: Schema mismatch in write_orders() argument &#39;df&#39;:</span>
+<span class="c1">#   expected: order_id:Int64, amount:Float64</span>
+<span class="c1">#   received: order_id:Int64, amount:Float64, revenue:Float64</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p><strong>Global default via dfg.arm(), per-function override via &#64;dfg.enforce()</strong></p>
 <p><code class="docutils literal notranslate"><span class="pre">dfg.arm(subset=...)</span></code> sets the global default. <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce(subset=...)</span></code> overrides
 it for that function only. Function level always wins.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-15" name="sd-tab-set-5" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-15">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># global: strict everywhere</span>
 
 <span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                     <span class="c1"># inherits global subset=False</span>
@@ -475,12 +761,50 @@ it for that function only. Function level always wins.</p>
 <span class="n">inspect</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes: function-level subset=True wins</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-16" name="sd-tab-set-5" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-16">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># global: strict everywhere</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                     <span class="c1"># inherits global subset=False</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># overrides global for this function only</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: global subset=False applies</span>
+<span class="n">inspect</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes: function-level subset=True wins</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-17" name="sd-tab-set-5" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-17">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>            <span class="c1"># global: strict everywhere</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                     <span class="c1"># inherits global subset=False</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_orders</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>        <span class="c1"># overrides global for this function only</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">inspect</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span> <span class="k">return</span> <span class="n">df</span>
+
+<span class="n">write_orders</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>       <span class="c1"># raises: global subset=False applies</span>
+<span class="n">inspect</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>            <span class="c1"># passes: function-level subset=True wins</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p><code class="docutils literal notranslate"><span class="pre">dfg.schema_of(df)</span></code> types always use exact matching regardless of <code class="docutils literal notranslate"><span class="pre">subset</span></code>.
 A snapshot is a snapshot.</p>
 </section>
 <section id="multi-stage-pipeline">
 <h2>Multi-stage pipeline<a class="headerlink" href="#multi-stage-pipeline" title="Link to this heading">¶</a></h2>
 <p>Each stage captures its output schema, which becomes the contract for the next stage.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-18" name="sd-tab-set-6" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-18">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 
@@ -490,7 +814,6 @@ A snapshot is a snapshot.</p>
     <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT, customer_id LONG&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Stage 1</span>
 <span class="n">RawSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 
 <span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
@@ -504,7 +827,6 @@ A snapshot is a snapshot.</p>
 <span class="n">enriched_df</span>    <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
 
-<span class="c1"># Stage 2</span>
 <span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_vip&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
@@ -512,7 +834,6 @@ A snapshot is a snapshot.</p>
 <span class="n">flagged_df</span>    <span class="o">=</span> <span class="n">flag_high_value</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
 <span class="n">FlaggedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>
 
-<span class="c1"># Stage 3: aggregation produces a completely different schema</span>
 <span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">aggregate</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">FlaggedSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
@@ -520,11 +841,102 @@ A snapshot is a snapshot.</p>
         <span class="n">F</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>   <span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;order_count&quot;</span><span class="p">),</span>
     <span class="p">)</span>
 
-<span class="c1"># Passing the wrong stage fails immediately:</span>
 <span class="n">aggregate</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>        <span class="c1"># raises: missing revenue, is_vip</span>
 <span class="n">aggregate</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>   <span class="c1"># raises: missing is_vip</span>
-<span class="n">aggregate</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>    <span class="c1"># OK</span>
+<span class="n">aggregate</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>    <span class="c1"># passes</span>
 </pre></div>
+</div>
+</div>
+<input id="sd-tab-item-19" name="sd-tab-set-6" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-19">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>     <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;customer_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">101</span><span class="p">,</span> <span class="mi">102</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="n">RawSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">discount</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">500</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">))</span>
+
+<span class="n">enriched_df</span>    <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">flagged_df</span>    <span class="o">=</span> <span class="n">flag_high_value</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+<span class="n">FlaggedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">FlaggedSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="n">total_revenue</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="s2">&quot;sum&quot;</span><span class="p">),</span>
+        <span class="n">order_count</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;order_id&quot;</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+<span class="n">aggregate</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>        <span class="c1"># raises: missing revenue, is_vip</span>
+<span class="n">aggregate</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>   <span class="c1"># raises: missing is_vip</span>
+<span class="n">aggregate</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>    <span class="c1"># passes</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-20" name="sd-tab-set-6" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-20">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span>    <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>      <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span>    <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">),</span>
+    <span class="s2">&quot;customer_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">101</span><span class="p">,</span> <span class="mi">102</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="n">RawSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+        <span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">),</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span>
+        <span class="n">discount</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">500</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="mf">50.0</span><span class="p">)</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="mf">0.0</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<span class="n">enriched_df</span>    <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">flagged_df</span>    <span class="o">=</span> <span class="n">flag_high_value</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+<span class="n">FlaggedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">FlaggedSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">group_by</span><span class="p">(</span><span class="s2">&quot;customer_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span>
+        <span class="n">pl</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;total_revenue&quot;</span><span class="p">),</span>
+        <span class="n">pl</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;order_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;order_count&quot;</span><span class="p">),</span>
+    <span class="p">)</span>
+
+<span class="n">aggregate</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>        <span class="c1"># raises: missing revenue, is_vip</span>
+<span class="n">aggregate</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>   <span class="c1"># raises: missing is_vip</span>
+<span class="n">aggregate</span><span class="p">(</span><span class="n">flagged_df</span><span class="p">)</span>    <span class="c1"># passes</span>
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 <section id="validating-at-load-time">
@@ -532,11 +944,37 @@ A snapshot is a snapshot.</p>
 <p><code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code> guards function boundaries. For storage boundaries (reading from
 parquet, CSV, a data catalog) use <code class="docutils literal notranslate"><span class="pre">Schema.assert_valid(df)</span></code> immediately after
 loading. This catches upstream schema drift before any processing starts.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-21" name="sd-tab-set-7" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-21">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="s2">&quot;/data/orders/raw.parquet&quot;</span><span class="p">)</span>
 <span class="n">RawOrderSchema</span><span class="o">.</span><span class="n">assert_valid</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>   <span class="c1"># raises SchemaValidationError if schema changed</span>
 
 <span class="n">enriched</span> <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>             <span class="c1"># @dfg.enforce then guards the function call</span>
 </pre></div>
+</div>
+</div>
+<input id="sd-tab-item-22" name="sd-tab-set-7" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-22">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;/data/orders/raw.parquet&quot;</span><span class="p">)</span>
+<span class="n">RawOrderSchema</span><span class="o">.</span><span class="n">assert_valid</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>   <span class="c1"># raises SchemaValidationError if schema changed</span>
+
+<span class="n">enriched</span> <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>             <span class="c1"># @dfg.enforce then guards the function call</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-23" name="sd-tab-set-7" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-23">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="s2">&quot;/data/orders/raw.parquet&quot;</span><span class="p">)</span>
+<span class="n">RawOrderSchema</span><span class="o">.</span><span class="n">assert_valid</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>   <span class="c1"># raises SchemaValidationError if schema changed</span>
+
+<span class="n">enriched</span> <span class="o">=</span> <span class="n">enrich</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>             <span class="c1"># @dfg.enforce then guards the function call</span>
+</pre></div>
+</div>
+</div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">assert_valid</span></code> reports all problems at once, not just the first one:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>SchemaValidationError: Schema validation failed:
@@ -551,13 +989,39 @@ useful when you want to inspect or log problems without stopping execution.</p>
 <h2>Disabling enforcement<a class="headerlink" href="#disabling-enforcement" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> and <code class="docutils literal notranslate"><span class="pre">dfg.disarm()</span></code> are the global on/off switch for enforcement.
 <code class="docutils literal notranslate"><span class="pre">arm()</span></code> activates enforcement across your package. <code class="docutils literal notranslate"><span class="pre">disarm()</span></code> turns it off
-entirely – every guarded function passes through without checking, regardless
+entirely: every guarded function passes through without checking, regardless
 of how it was armed or decorated.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-24" name="sd-tab-set-8" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-24">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>               <span class="c1"># enforcement active</span>
 <span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># raises: schema mismatch</span>
 <span class="n">dfg</span><span class="o">.</span><span class="n">disarm</span><span class="p">()</span>
 <span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># passes: enforcement is off</span>
 </pre></div>
+</div>
+</div>
+<input id="sd-tab-item-25" name="sd-tab-set-8" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-25">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>               <span class="c1"># enforcement active</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># raises: schema mismatch</span>
+<span class="n">dfg</span><span class="o">.</span><span class="n">disarm</span><span class="p">()</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># passes: enforcement is off</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-26" name="sd-tab-set-8" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-26">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>               <span class="c1"># enforcement active</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># raises: schema mismatch</span>
+<span class="n">dfg</span><span class="o">.</span><span class="n">disarm</span><span class="p">()</span>
+<span class="n">enrich</span><span class="p">(</span><span class="n">wrong_df</span><span class="p">)</span>        <span class="c1"># passes: enforcement is off</span>
+</pre></div>
+</div>
+</div>
 </div>
 <p>This is useful in tests where you want to exercise transformation logic without
 providing schema-valid fixtures.</p>
@@ -566,6 +1030,10 @@ providing schema-valid fixtures.</p>
 <h2>Schema history<a class="headerlink" href="#schema-history" title="Link to this heading">¶</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">dfg.dataset(df)</span></code> wraps a DataFrame and records every schema-changing operation.
 When <code class="docutils literal notranslate"><span class="pre">validate()</span></code> fails, the error includes the full history.</p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-27" name="sd-tab-set-9" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-27">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
 
@@ -598,9 +1066,83 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <span class="c1"># ────────────────────────────────────────────────────────────</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-28" name="sd-tab-set-9" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-28">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span>  <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;customer&quot;</span><span class="p">:</span>  <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="s2">&quot;Alice&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>    <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">discount</span><span class="o">=</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ds</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">500</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">))</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;customer&quot;</span><span class="p">:</span> <span class="s2">&quot;customer_name&quot;</span><span class="p">})</span>
+
+<span class="n">ds</span><span class="o">.</span><span class="n">schema_history</span><span class="o">.</span><span class="n">print</span><span class="p">()</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+<span class="c1"># Schema Evolution</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+<span class="c1">#   [ 0] input</span>
+<span class="c1">#        order_id:int64, customer:object, amount:float64  (no schema change)</span>
+<span class="c1">#   [ 1] assign(&#39;revenue&#39;)</span>
+<span class="c1">#        added: revenue:float64</span>
+<span class="c1">#   [ 2] assign(&#39;discount&#39;)</span>
+<span class="c1">#        added: discount:float64</span>
+<span class="c1">#   [ 3] rename({&#39;customer&#39;→&#39;customer_name&#39;})</span>
+<span class="c1">#        added: customer_name:object | dropped: customer</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-29" name="sd-tab-set-9" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-29">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span>  <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;customer&quot;</span><span class="p">:</span>  <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="s2">&quot;Alice&quot;</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>    <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">dataset</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1.1</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">discount</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">500</span><span class="p">)</span><span class="o">.</span><span class="n">then</span><span class="p">(</span><span class="mf">50.0</span><span class="p">)</span><span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="mf">0.0</span><span class="p">))</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;customer&quot;</span><span class="p">)</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">rename</span><span class="p">({</span><span class="s2">&quot;customer&quot;</span><span class="p">:</span> <span class="s2">&quot;customer_name&quot;</span><span class="p">})</span>
+
+<span class="n">ds</span><span class="o">.</span><span class="n">schema_history</span><span class="o">.</span><span class="n">print</span><span class="p">()</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+<span class="c1"># Schema Evolution</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+<span class="c1">#   [ 0] input</span>
+<span class="c1">#        order_id:Int64, customer:String, amount:Float64  (no schema change)</span>
+<span class="c1">#   [ 1] with_columns(&#39;revenue&#39;)</span>
+<span class="c1">#        added: revenue:Float64</span>
+<span class="c1">#   [ 2] with_columns(&#39;discount&#39;)</span>
+<span class="c1">#        added: discount:Float64</span>
+<span class="c1">#   [ 3] drop([&#39;customer&#39;])</span>
+<span class="c1">#        dropped: customer</span>
+<span class="c1"># ────────────────────────────────────────────────────────────</span>
+</pre></div>
+</div>
+</div>
+</div>
 </section>
-<section id="sparkschema-utilities">
-<h2>SparkSchema utilities<a class="headerlink" href="#sparkschema-utilities" title="Link to this heading">¶</a></h2>
+<section id="schema-utilities">
+<h2>Schema utilities<a class="headerlink" href="#schema-utilities" title="Link to this heading">¶</a></h2>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-30" name="sd-tab-set-10" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-30">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
@@ -610,19 +1152,16 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <span class="p">)</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
 <span class="c1"># Use the schema when creating a DataFrame</span>
-<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
-    <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)],</span>
-    <span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">(),</span>
-<span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)],</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">to_struct</span><span class="p">())</span>
 
 <span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
 <span class="n">empty_ds</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">spark</span><span class="p">)</span>
 
-<span class="c1"># Build a SparkSchema class from a live StructType</span>
+<span class="c1"># Build a schema class from a live StructType</span>
 <span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
 
 <span class="c1"># Generate copy-pasteable Python source for a schema</span>
@@ -636,6 +1175,75 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <span class="c1">#     amount:   T.DoubleType()</span>
 <span class="c1">#     ...</span>
 </pre></div>
+</div>
+</div>
+<input id="sd-tab-item-31" name="sd-tab-set-10" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-31">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
+<span class="n">empty_df</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+
+<span class="c1"># Build a schema class from a dtype dict</span>
+<span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
+
+<span class="c1"># Generate copy-pasteable Python source for a schema</span>
+<span class="n">Schema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OrderSchema&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">to_code</span><span class="p">())</span>
+<span class="c1"># import numpy as np</span>
+<span class="c1"># import dfguard.pandas as dfg</span>
+<span class="c1">#</span>
+<span class="c1"># class OrderSchema(dfg.PandasSchema):</span>
+<span class="c1">#     order_id = np.dtype(&#39;int64&#39;)</span>
+<span class="c1">#     amount   = np.dtype(&#39;float64&#39;)</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-32" name="sd-tab-set-10" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-32">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+
+<span class="c1"># Create an empty DataFrame with the right schema (useful in tests)</span>
+<span class="n">empty_df</span> <span class="o">=</span> <span class="n">OrderSchema</span><span class="o">.</span><span class="n">empty</span><span class="p">()</span>
+
+<span class="c1"># Build a schema class from a schema dict</span>
+<span class="n">Discovered</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Discovered&quot;</span><span class="p">)</span>
+
+<span class="c1"># Generate copy-pasteable Python source for a schema</span>
+<span class="n">Schema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="o">.</span><span class="n">from_struct</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">raw_df</span><span class="o">.</span><span class="n">schema</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;OrderSchema&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Schema</span><span class="o">.</span><span class="n">to_code</span><span class="p">())</span>
+<span class="c1"># import polars as pl</span>
+<span class="c1"># import dfguard.polars as dfg</span>
+<span class="c1">#</span>
+<span class="c1"># class OrderSchema(dfg.PolarsSchema):</span>
+<span class="c1">#     order_id = pl.Int64</span>
+<span class="c1">#     amount   = pl.Float64</span>
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 </section>
@@ -698,7 +1306,7 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <li><a class="reference internal" href="#">Quickstart</a><ul>
 <li><a class="reference internal" href="#defining-a-schema-type">Defining a schema type</a><ul>
 <li><a class="reference internal" href="#dfg-schema-of-df-exact-snapshot">dfg.schema_of(df): exact snapshot</a></li>
-<li><a class="reference internal" href="#dfg-sparkschema-upfront-declaration">dfg.SparkSchema: upfront declaration</a></li>
+<li><a class="reference internal" href="#upfront-declaration">Upfront declaration</a></li>
 <li><a class="reference internal" href="#choosing-between-the-two">Choosing between the two</a></li>
 </ul>
 </li>
@@ -712,7 +1320,7 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
 <li><a class="reference internal" href="#validating-at-load-time">Validating at load time</a></li>
 <li><a class="reference internal" href="#disabling-enforcement">Disabling enforcement</a></li>
 <li><a class="reference internal" href="#schema-history">Schema history</a></li>
-<li><a class="reference internal" href="#sparkschema-utilities">SparkSchema utilities</a></li>
+<li><a class="reference internal" href="#schema-utilities">Schema utilities</a></li>
 </ul>
 </li>
 </ul>

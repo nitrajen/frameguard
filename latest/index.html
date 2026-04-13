@@ -253,8 +253,8 @@ with an error that tells you nothing about where the mismatch started.</p>
 <p><strong>dfguard moves that failure to the function call.</strong> The wrong DataFrame is
 rejected immediately with a precise error: which function, which argument, what
 schema was expected, what arrived. <strong>Lightweight</strong>: enforcement is pure metadata
-inspection — dfguard reads the schema struct from your DataFrame, no data is
-scanned, no Spark jobs are triggered. Unlike pandera, which introduces its own
+inspection: dfguard reads the schema struct from your DataFrame, no data is
+scanned, no Spark jobs are triggered. Unlike <a class="reference external" href="https://pandera.readthedocs.io/en/stable/">pandera</a>, which introduces its own
 type system, dfguard uses the types your library already ships with:
 <code class="docutils literal notranslate"><span class="pre">T.LongType()</span></code> for PySpark, <code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code> for Polars, <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;int64&quot;)</span></code>
 for pandas.</p>
@@ -425,11 +425,19 @@ No boilerplate. The schema is locked to that DataFrame’s shape at that moment.
 <input checked="checked" id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
 <label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-3">
 PySpark</label><div class="sd-tab-content docutils">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">StructType</span><span class="p">([</span>       <span class="c1"># array of structs</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;sku&quot;</span><span class="p">,</span>      <span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()),</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">,</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()),</span>
+        <span class="n">T</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>    <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()),</span>
+    <span class="p">]))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()]</span>         <span class="c1"># nullable field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                <span class="c1"># inherits all parent fields</span>
     <span class="n">revenue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -437,11 +445,20 @@ PySpark</label><div class="sd-tab-content docutils">
 <input id="sd-tab-item-4" name="sd-tab-set-1" type="radio">
 <label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-4">
 pandas</label><div class="sd-tab-content docutils">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
-    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
-    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyarrow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pa</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">ArrowDtype</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">list_</span><span class="p">(</span><span class="n">pa</span><span class="o">.</span><span class="n">struct</span><span class="p">([</span>  <span class="c1"># nested via PyArrow</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;sku&quot;</span><span class="p">,</span>      <span class="n">pa</span><span class="o">.</span><span class="n">string</span><span class="p">()),</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">,</span> <span class="n">pa</span><span class="o">.</span><span class="n">int32</span><span class="p">()),</span>
+        <span class="n">pa</span><span class="o">.</span><span class="n">field</span><span class="p">(</span><span class="s2">&quot;price&quot;</span><span class="p">,</span>    <span class="n">pa</span><span class="o">.</span><span class="n">float64</span><span class="p">()),</span>
+    <span class="p">])))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()]</span>           <span class="c1"># nullable field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                    <span class="c1"># inherits all parent fields</span>
     <span class="n">revenue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -449,18 +466,27 @@ pandas</label><div class="sd-tab-content docutils">
 <input id="sd-tab-item-5" name="sd-tab-set-1" type="radio">
 <label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-5">
 Polars</label><div class="sd-tab-content docutils">
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
-    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
-    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>     <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">line_items</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">Struct</span><span class="p">({</span>               <span class="c1"># list of structs</span>
+        <span class="s2">&quot;sku&quot;</span><span class="p">:</span>      <span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">,</span>
+        <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">,</span>
+        <span class="s2">&quot;price&quot;</span><span class="p">:</span>    <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">,</span>
+    <span class="p">}))</span>
+    <span class="n">zip_code</span>   <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">]</span>               <span class="c1"># nullable field</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>                 <span class="c1"># inherits all parent fields</span>
     <span class="n">revenue</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
 </pre></div>
 </div>
 </div>
 </div>
 <p>No live DataFrame needed. Subclasses inherit parent fields. Supports complex
-nested types. Works with IDE autocomplete and static analysis.</p>
+nested types. The schema class is a regular Python class: go-to-definition and
+class-level navigation work in your IDE.</p>
 <p><strong>For data pipelines, Option B is preferred.</strong> Schemas are defined once,
 shared across modules, visible in version control, and discoverable by your
 IDE. Option A is convenient for exploration or when adding dfguard to existing
