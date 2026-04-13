@@ -167,27 +167,64 @@ Exact matching: a DataFrame with extra columns does **not** satisfy `RawSchema`.
 
 ### Declare upfront
 
+No live DataFrame needed. Subclasses inherit parent fields. All three backends support nested types fully.
+
+**PySpark** — arrays, structs, maps via `T.ArrayType` / `T.StructType` / `T.MapType`:
+
 ```python
 from dfguard.pyspark import Optional
 from pyspark.sql import types as T
 
 class OrderSchema(dfg.SparkSchema):
-    order_id = T.LongType()
-    amount   = T.DoubleType()
-    tags     = T.ArrayType(T.StringType())
-    address  = Optional[T.StringType()]   # nullable field
+    order_id   = T.LongType()
+    amount     = T.DoubleType()
+    line_items = T.ArrayType(T.StructType([          # array of structs
+        T.StructField("sku",      T.StringType()),
+        T.StructField("quantity", T.IntegerType()),
+        T.StructField("price",    T.DoubleType()),
+    ]))
+    zip_code   = Optional[T.StringType()]            # nullable field
 
-class EnrichedSchema(OrderSchema):        # inherits all parent fields
+class EnrichedSchema(OrderSchema):                   # inherits all parent fields
     revenue = T.DoubleType()
-```
 
-No live DataFrame needed. Subclasses inherit parent fields. Works with nested structs, arrays, maps, and complex nested column types.
-
-Use the schema when creating a DataFrame:
-
-```python
 df = spark.createDataFrame(rows, OrderSchema.to_struct())
 ```
+
+**Polars** — `pl.List`, `pl.Struct`, `pl.Array` are native first-class types:
+
+```python
+from dfguard.polars import Optional
+
+class OrderSchema(dfg.PolarsSchema):
+    order_id   = pl.Int64
+    amount     = pl.Float64
+    line_items = pl.List(pl.Struct({                 # list of structs
+        "sku":      pl.String,
+        "quantity": pl.Int32,
+        "price":    pl.Float64,
+    }))
+    zip_code   = Optional[pl.String]                 # nullable field
+```
+
+**pandas** — use `pd.ArrowDtype` (requires `pyarrow`) for nested types:
+
+```python
+import pyarrow as pa
+from dfguard.pandas import Optional
+
+class OrderSchema(dfg.PandasSchema):
+    order_id   = np.dtype("int64")
+    amount     = np.dtype("float64")
+    line_items = pd.ArrowDtype(pa.list_(pa.struct([  # nested via PyArrow
+        pa.field("sku",      pa.string()),
+        pa.field("quantity", pa.int32()),
+        pa.field("price",    pa.float64()),
+    ])))
+    zip_code   = Optional[pd.StringDtype()]          # nullable field
+```
+
+> **pandas + PyArrow**: `pd.ArrowDtype` gives pandas the same nested-type enforcement as PySpark and Polars — arrays, structs, and maps at arbitrary depth. Without PyArrow, pandas dtype enforcement is limited to flat scalar types (`np.dtype`, `pd.StringDtype`, etc.). Install with `pip install dfguard[pandas] pyarrow`.
 
 ---
 
