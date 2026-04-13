@@ -19,7 +19,7 @@
 
 Data pipelines fail late. A DataFrame with the wrong schema enters a function without complaint, the job runs, and the crash surfaces somewhere downstream with an error that tells you nothing about where the mismatch started.
 
-**dfguard moves that failure to the function call.** The wrong DataFrame is rejected immediately with a precise error: which function, which argument, what schema was expected, what arrived. **Lightweight**: enforcement is pure metadata inspection — dfguard reads the schema struct from your DataFrame, no data is scanned, no Spark jobs triggered. Unlike pandera, which introduces its own type system, dfguard uses the types your library already ships with: `T.LongType()` for PySpark, `pl.Int64` for Polars, `np.dtype("int64")` for pandas.
+**dfguard moves that failure to the function call.** The wrong DataFrame is rejected immediately with a precise error: which function, which argument, what schema was expected, what arrived. **Lightweight**: enforcement is pure metadata inspection — dfguard reads the schema struct from your DataFrame, no data is scanned, no Spark jobs triggered. Unlike [pandera](https://pandera.readthedocs.io/en/stable/), which introduces its own type system, dfguard uses the types your library already ships with: `T.LongType()` for PySpark, `pl.Int64` for Polars, `np.dtype("int64")` for pandas.
 
 ## Compatibility
 
