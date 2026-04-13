@@ -56,5 +56,5 @@ intersphinx_mapping = {
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = 'furo'           # modern, clean, popular (used by pip, black, attrs)
-html_static_path = ['_static']
+
 html_title = f"dfguard {release}"
