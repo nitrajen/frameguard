@@ -3,12 +3,13 @@
   <head><meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Data Pipeline Usage" href="pipelines.html"><link rel="prev" title="dfguard" href="index.html">
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Supported Types" href="types.html"><link rel="prev" title="dfguard" href="index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>Quickstart - dfguard 0.1.2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
@@ -190,24 +191,22 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="index.html">dfguard</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Supported Types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipelines.html">Data Pipeline Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="airflow.html">Using dfguard in Airflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kedro.html">Using dfguard in Kedro</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="api/pyspark/index.html">PySpark</a><input aria-label="Toggle navigation of PySpark" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/schemas.html">Schemas</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/enforcement.html">Enforcement</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/dataset.html">Dataset</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/decorators.html">Decorators</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/history.html">Schema History</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/exceptions.html">Exceptions</a></li>
 </ul>
-</li>
-</ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/schemas.html">Schemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/enforcement.html">Enforcement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -248,15 +247,23 @@
         <article role="main" id="furo-main-content">
           <section id="quickstart">
 <h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading">¶</a></h1>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>pyspark<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>pyspark<span class="o">]</span><span class="w">   </span><span class="c1"># PySpark</span>
+pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>pandas<span class="o">]</span><span class="w">    </span><span class="c1"># pandas</span>
+pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>polars<span class="o">]</span><span class="w">    </span><span class="c1"># Polars</span>
+pip<span class="w"> </span>install<span class="w"> </span>dfguard<span class="o">[</span>all<span class="o">]</span><span class="w">       </span><span class="c1"># all backends</span>
 </pre></div>
 </div>
-<p>Requires Python &gt;= 3.10, PySpark &gt;= 3.3.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>dfguard currently supports <strong>PySpark</strong>. Support for additional DataFrame
-libraries (pandas, polars, and others) is planned.</p>
-</div>
+<p>Requires Python &gt;= 3.10.</p>
+<p>Interactive notebooks with end-to-end examples for each backend are available
+on GitHub:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/pyspark_quickstart.ipynb">PySpark quickstart notebook</a></p></li>
+<li><p><a class="reference external" href="https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/pandas_quickstart.ipynb">pandas quickstart notebook</a></p></li>
+<li><p><a class="reference external" href="https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/polars_quickstart.ipynb">Polars quickstart notebook</a></p></li>
+</ul>
+<p>The page below uses PySpark examples throughout. The API is identical across
+all backends: replace <code class="docutils literal notranslate"><span class="pre">dfguard.pyspark</span></code> with <code class="docutils literal notranslate"><span class="pre">dfguard.pandas</span></code> or
+<code class="docutils literal notranslate"><span class="pre">dfguard.polars</span></code>, and use the types your library ships with.</p>
 <p>All examples on this page assume the following setup:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
@@ -638,12 +645,12 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="pipelines.html">
+          <a class="next-page" href="types.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Data Pipeline Usage</div>
+                <div class="title">Supported Types</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -721,5 +728,6 @@ When <code class="docutils literal notranslate"><span class="pre">validate()</sp
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

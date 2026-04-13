@@ -7,87 +7,237 @@ with an error that tells you nothing about where the mismatch started.
 
 **dfguard moves that failure to the function call.** The wrong DataFrame is
 rejected immediately with a precise error: which function, which argument, what
-schema was expected, what arrived.
+schema was expected, what arrived. **Lightweight**: enforcement is pure metadata
+inspection — dfguard reads the schema struct from your DataFrame, no data is
+scanned, no Spark jobs are triggered. Unlike pandera, which introduces its own
+type system, dfguard uses the types your library already ships with:
+``T.LongType()`` for PySpark, ``pl.Int64`` for Polars, ``np.dtype("int64")``
+for pandas.
 
-Currently supports PySpark. pandas and polars support coming soon.
+Compatibility
+-------------
 
-.. code-block:: python
+.. list-table::
+   :header-rows: 1
+   :widths: 30 25 25
 
-   import dfguard.pyspark as dfg
-   from pyspark.sql import SparkSession, functions as F
-   from pyspark.sql import types as T
+   * - Backend
+     - Version
+     - Python
+   * - PySpark
+     - >= 3.3
+     - >= 3.10
+   * - pandas
+     - >= 1.5
+     - >= 3.10
+   * - Polars
+     - >= 0.20
+     - >= 3.10
 
-   spark = SparkSession.builder.getOrCreate()
-   raw_df = spark.createDataFrame(
-       [(1, 10.0, 3), (2, 5.0, 7)],
-       "order_id LONG, amount DOUBLE, quantity INT",
-   )
+----
 
-   # Declare the input contract upfront -- no live DataFrame needed
-   class RawSchema(dfg.SparkSchema):
-       order_id: T.LongType()
-       amount:   T.DoubleType()
-       quantity: T.IntegerType()
+.. tab-set::
 
-   @dfg.enforce
-   def enrich(df: RawSchema):
-       return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+   .. tab-item:: PySpark
+      :sync: pyspark
 
-   # Capture the output schema from the live result
-   EnrichedSchema = dfg.schema_of(enrich(raw_df))
+      .. code-block:: python
 
-   @dfg.enforce
-   def flag_high_value(df: EnrichedSchema):
-       return df.withColumn("is_vip", F.col("revenue") > 1000)
+         import dfguard.pyspark as dfg
+         from pyspark.sql import SparkSession, functions as F, types as T
 
-   flag_high_value(raw_df)
-   # TypeError: Schema mismatch in flag_high_value() argument 'df':
-   #   expected: order_id:bigint, amount:double, quantity:int, revenue:double
-   #   received: order_id:bigint, amount:double, quantity:int
+         spark = SparkSession.builder.getOrCreate()
+         raw_df = spark.createDataFrame(
+             [(1, 10.0, 3), (2, 5.0, 7)],
+             "order_id LONG, amount DOUBLE, quantity INT",
+         )
+
+         # Option A: arm() -- covers the whole package, no decorator on each function
+         # Place dfg.arm() in my_pipeline/__init__.py
+         dfg.arm()
+
+         class RawSchema(dfg.SparkSchema):
+             order_id = T.LongType()
+             amount   = T.DoubleType()
+             quantity = T.IntegerType()
+
+         def enrich(df: RawSchema):                            # enforced by arm()
+             return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
+
+         # captures schema of the returned DataFrame
+         EnrichedSchema = dfg.schema_of(enrich(raw_df))
+
+         @dfg.enforce                                          # subset=True by default
+         def flag_high_value(df: EnrichedSchema):
+             return df.withColumn("is_vip", F.col("revenue") > 1000)
+
+         flag_high_value(raw_df)
+         # TypeError: Schema mismatch in flag_high_value() argument 'df':
+         #   expected: order_id:bigint, amount:double, quantity:int, revenue:double
+         #   received: order_id:bigint, amount:double, quantity:int
+
+   .. tab-item:: pandas
+      :sync: pandas
+
+      .. code-block:: python
+
+         import numpy as np
+         import pandas as pd
+         import dfguard.pandas as dfg
+
+         raw_df = pd.DataFrame({
+             "order_id": pd.array([1, 2, 3], dtype="int64"),
+             "amount":   pd.array([10.0, 5.0, 8.5], dtype="float64"),
+             "quantity": pd.array([3, 1, 2], dtype="int64"),
+         })
+
+         # Option A: arm() -- covers the whole package, no decorator on each function
+         dfg.arm()
+
+         class RawSchema(dfg.PandasSchema):
+             order_id = np.dtype("int64")
+             amount   = np.dtype("float64")
+             quantity = np.dtype("int64")
+             label    = pd.StringDtype()         # nullable pandas string
+
+         def enrich(df: RawSchema):              # enforced by arm()
+             return df.assign(revenue=df["amount"] * df["quantity"])
+
+         # captures schema of the returned DataFrame
+         EnrichedSchema = dfg.schema_of(enrich(raw_df))
+
+         @dfg.enforce                            # subset=True by default
+         def flag_high_value(df: EnrichedSchema):
+             return df.assign(is_vip=df["revenue"] > 1000)
+
+         flag_high_value(raw_df)
+         # TypeError: Schema mismatch in flag_high_value() argument 'df':
+         #   expected: order_id:int64, amount:float64, quantity:int64, revenue:float64
+         #   received: order_id:int64, amount:float64, quantity:int64
+
+   .. tab-item:: Polars
+      :sync: polars
+
+      .. code-block:: python
+
+         import polars as pl
+         import dfguard.polars as dfg
+
+         raw_df = pl.DataFrame({
+             "order_id": pl.Series([1, 2, 3], dtype=pl.Int64),
+             "amount":   pl.Series([10.0, 5.0, 8.5], dtype=pl.Float64),
+             "quantity": pl.Series([3, 1, 2], dtype=pl.Int32),
+         })
+
+         # Option A: arm() -- covers the whole package, no decorator on each function
+         dfg.arm()
+
+         class RawSchema(dfg.PolarsSchema):
+             order_id = pl.Int64
+             amount   = pl.Float64
+             quantity = pl.Int32
+
+         def enrich(df: RawSchema) -> pl.DataFrame:   # enforced by arm()
+             return df.with_columns(revenue=pl.col("amount") * pl.col("quantity"))
+
+         # captures schema of the returned DataFrame
+         EnrichedSchema = dfg.schema_of(enrich(raw_df))
+
+         @dfg.enforce                                  # subset=True by default
+         def flag_high_value(df: EnrichedSchema) -> pl.DataFrame:
+             return df.with_columns(is_vip=pl.col("revenue") > 1000)
+
+         flag_high_value(raw_df)
+         # TypeError: Schema mismatch in flag_high_value() argument 'df':
+         #   expected: order_id:Int64, amount:Float64, quantity:Int32, revenue:Float64
+         #   received: order_id:Int64, amount:Float64, quantity:Int32
 
 No validation logic inside the functions.
 The wrong DataFrame simply cannot enter the wrong function.
 
-For package-wide enforcement without decorating each function, call
-``dfg.arm()`` once from your package entry point -- see the :doc:`quickstart`.
-
-``pip install dfguard[pyspark]`` installs only PySpark, which you already
-have. Enforcement is pure Python ``isinstance()`` checks. Only schema-annotated
-arguments are validated; ``str``, ``int``, and everything else passes through
-untouched.
+Call ``dfg.arm()`` once from your package ``__init__.py`` to protect the whole
+package. No decorator needed on each function. See the :doc:`quickstart`.
 
 Two ways to define a schema
 ----------------------------
 
-**Capture from a live DataFrame** (exact matching, snapshot at each stage):
+**Option A: Capture from a live DataFrame**
 
 .. code-block:: python
 
    RawSchema      = dfg.schema_of(raw_df)
    EnrichedSchema = dfg.schema_of(enriched_df)
 
-**Declare upfront** (no DataFrame required):
+Useful for quick scripts and existing code where you already have a DataFrame.
+No boilerplate. The schema is locked to that DataFrame's shape at that moment.
 
-.. code-block:: python
+**Option B: Declare upfront as a class**
 
-   class OrderSchema(dfg.SparkSchema):
-       order_id: T.LongType()
-       amount:   T.DoubleType()
+.. tab-set::
 
-   class EnrichedSchema(OrderSchema):   # inherits all parent fields
-       revenue: T.DoubleType()
+   .. tab-item:: PySpark
+      :sync: pyspark
 
-``dfg.schema_of`` is precise: exact schema, exact stage.
-``dfg.SparkSchema`` is contractual: declare what you need upfront.
+      .. code-block:: python
+
+         class OrderSchema(dfg.SparkSchema):
+             order_id = T.LongType()
+             amount   = T.DoubleType()
+
+         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+             revenue = T.DoubleType()
+
+   .. tab-item:: pandas
+      :sync: pandas
+
+      .. code-block:: python
+
+         class OrderSchema(dfg.PandasSchema):
+             order_id = np.dtype("int64")
+             amount   = np.dtype("float64")
+
+         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+             revenue = np.dtype("float64")
+
+   .. tab-item:: Polars
+      :sync: polars
+
+      .. code-block:: python
+
+         class OrderSchema(dfg.PolarsSchema):
+             order_id = pl.Int64
+             amount   = pl.Float64
+
+         class EnrichedSchema(OrderSchema):   # inherits all parent fields
+             revenue = pl.Float64
+
+No live DataFrame needed. Subclasses inherit parent fields. Supports complex
+nested types. Works with IDE autocomplete and static analysis.
+
+**For data pipelines, Option B is preferred.** Schemas are defined once,
+shared across modules, visible in version control, and discoverable by your
+IDE. Option A is convenient for exploration or when adding dfguard to existing
+code you do not want to change.
 
 See the :doc:`quickstart` for the full walkthrough.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents
+   :maxdepth: 1
+   :caption: User Guide
 
+   self
    quickstart
+   types
    pipelines
    airflow
    kedro
-   api/index
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API Reference
+
+   api/schemas
+   api/enforcement
+   api/dataset
+   api/history
+   api/exceptions

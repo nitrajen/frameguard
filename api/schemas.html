@@ -1,0 +1,1027 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="../">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="../genindex.html"><link rel="search" title="Search" href="../search.html"><link rel="next" title="Enforcement" href="enforcement.html"><link rel="prev" title="Using dfguard in Kedro" href="../kedro.html">
+
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>Schemas - dfguard 0.1.2</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../index.html"><div class="brand">dfguard 0.1.2</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../index.html">
+  
+  <span class="sidebar-brand-text">dfguard 0.1.2</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../index.html">dfguard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../types.html">Supported Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pipelines.html">Data Pipeline Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../airflow.html">Using dfguard in Airflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kedro.html">Using dfguard in Kedro</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Schemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="enforcement.html">Enforcement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exceptions.html">Exceptions</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="../_sources/api/schemas.rst.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <section id="schemas">
+<h1>Schemas<a class="headerlink" href="#schemas" title="Link to this heading">¶</a></h1>
+<p>Two ways to define a schema:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">schema_of(df)</span></code>: captures the schema of a live DataFrame as a Python type.
+By default the resulting type uses subset matching (extra columns are fine);
+pass <code class="docutils literal notranslate"><span class="pre">subset=False</span></code> to the <code class="docutils literal notranslate"><span class="pre">&#64;enforce</span></code> decorator or <code class="docutils literal notranslate"><span class="pre">arm()</span></code> call to
+require an exact match.</p></li>
+<li><p>Schema subclass (<code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code> / <code class="docutils literal notranslate"><span class="pre">PandasSchema</span></code> / <code class="docutils literal notranslate"><span class="pre">PolarsSchema</span></code>): declare
+the contract upfront without a DataFrame. Subset matching by default: extra
+columns are fine. Child classes inherit all parent fields.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">Optional[dtype]</span></code> is documentation: it signals that nulls are expected in
+that column. dfguard checks the column dtype but never inspects the data for
+null presence. A column passes whether it has zero nulls or all nulls. In
+PySpark strict mode (<code class="docutils literal notranslate"><span class="pre">subset=False</span></code>), the <code class="docutils literal notranslate"><span class="pre">nullable</span></code> flag in the schema
+metadata is compared, but no Spark job is triggered and no data is read.</p>
+</div>
+<hr class="docutils" />
+<section id="schema-of">
+<h2>schema_of<a class="headerlink" href="#schema-of" title="Link to this heading">¶</a></h2>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-0">
+PySpark</label><div class="sd-tab-content docutils">
+<dl class="py function">
+<dt class="sig sig-object py" id="dfguard.pyspark.dataset.schema_of">
+<span class="sig-prename descclassname"><span class="pre">dfguard.pyspark.dataset.</span></span><span class="sig-name descname"><span class="pre">schema_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/dataset.html#schema_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.dataset.schema_of" title="Link to this definition">¶</a></dt>
+<dd><p>Capture a DataFrame’s schema as a Python type class.</p>
+<p>Returns a class whose <code class="docutils literal notranslate"><span class="pre">isinstance</span></code> check does <strong>exact</strong> schema matching:
+same column names, same types, nothing extra.  Assign in PascalCase and
+use as a type annotation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span> <span class="o">...</span>   <span class="c1"># wrong schema → raises at call site</span>
+</pre></div>
+</div>
+<p>Capture a new type at each stage that changes the schema:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">_TypedDatasetBase</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-1">
+pandas</label><div class="sd-tab-content docutils">
+<dl class="py function">
+<dt class="sig sig-object py" id="dfguard.pandas.dataset.schema_of">
+<span class="sig-prename descclassname"><span class="pre">dfguard.pandas.dataset.</span></span><span class="sig-name descname"><span class="pre">schema_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/dataset.html#schema_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.dataset.schema_of" title="Link to this definition">¶</a></dt>
+<dd><p>Capture a DataFrame’s schema as a Python type class.</p>
+<p>Returns a class whose <code class="docutils literal notranslate"><span class="pre">isinstance</span></code> check does <strong>exact</strong> schema matching:
+same column names, same dtypes, nothing extra.  Assign in PascalCase and
+use as a type annotation:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">RawSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+
+<span class="nd">@enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span> <span class="o">...</span>   <span class="c1"># wrong schema → raises at call site</span>
+</pre></div>
+</div>
+<p>Capture a new type at each stage that changes the schema:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">_PandasDatasetBase</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<input id="sd-tab-item-2" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-2">
+Polars</label><div class="sd-tab-content docutils">
+<p>Also accepts <code class="docutils literal notranslate"><span class="pre">pl.LazyFrame</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="dfguard.polars.dataset.schema_of">
+<span class="sig-prename descclassname"><span class="pre">dfguard.polars.dataset.</span></span><span class="sig-name descname"><span class="pre">schema_of</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/dataset.html#schema_of"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.dataset.schema_of" title="Link to this definition">¶</a></dt>
+<dd><p>Capture the exact schema of <em>df</em> as a type usable with <code class="docutils literal notranslate"><span class="pre">&#64;enforce</span></code>.</p>
+<p>Unlike <code class="docutils literal notranslate"><span class="pre">PolarsSchema</span></code> (subset matching), the resulting type requires
+the DataFrame to have <strong>exactly</strong> the captured columns — no extras.</p>
+<p>Works with both <code class="docutils literal notranslate"><span class="pre">pl.DataFrame</span></code> and <code class="docutils literal notranslate"><span class="pre">pl.LazyFrame</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="schema-class">
+<h2>Schema class<a class="headerlink" href="#schema-class" title="Link to this heading">¶</a></h2>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-3">
+PySpark</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">tags</span>     <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">ArrayType</span><span class="p">(</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">())</span>
+    <span class="nb">zip</span>      <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()]</span>   <span class="c1"># nullable</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>       <span class="c1"># inherits all fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dfguard.pyspark.schema.</span></span><span class="sig-name descname"><span class="pre">SparkSchema</span></span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema" title="Link to this definition">¶</a></dt>
+<dd><p>Declare a DataFrame’s expected shape as a Python class.</p>
+<p>Use this when you want to write down a schema without a live DataFrame.
+<code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code> uses <strong>subset matching</strong>: the DataFrame must have every
+declared field, but extra columns are fine.  This is the opposite of
+<code class="docutils literal notranslate"><span class="pre">schema_of(df)</span></code>, which requires an exact match (no extra columns).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSchema</span><span class="p">,</span> <span class="n">enforce</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">SparkSchema</span><span class="p">):</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
+    <span class="nb">zip</span><span class="p">:</span>      <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="o">.</span><span class="n">StringType</span><span class="p">()]</span>   <span class="c1"># nullable field</span>
+
+<span class="nd">@enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="c1"># A DataFrame with only these columns passes.</span>
+<span class="c1"># A DataFrame with extra columns also passes (subset matching).</span>
+<span class="c1"># A DataFrame missing &#39;order_id&#39; raises immediately.</span>
+</pre></div>
+</div>
+<p>Child classes inherit all parent fields:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>
+    <span class="n">revenue</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>   <span class="c1"># adds revenue, keeps order_id/amount/quantity/zip</span>
+</pre></div>
+</div>
+<p>Note: use <code class="docutils literal notranslate"><span class="pre">Optional[T.XxxType()]</span></code> for nullable fields. PySpark DataType
+instances do not support the <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">|</span> <span class="pre">None</span></code> union syntax.
+<code class="docutils literal notranslate"><span class="pre">SubSchema</span> <span class="pre">|</span> <span class="pre">None</span></code> works when the field type is a nested SparkSchema
+subclass (a Python class, not a DataType instance).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.to_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_struct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.to_struct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.to_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Return the <code class="docutils literal notranslate"><span class="pre">StructType</span></code> for this schema. Result is cached after the first call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.from_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_struct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">struct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GeneratedSchema'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.from_struct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.from_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Create a new SparkSchema subclass from a live <code class="docutils literal notranslate"><span class="pre">StructType</span></code>.</p>
+<p>Nested StructTypes are recursively converted to their own SparkSchema
+subclasses. Useful for round-tripping or generating typed wrappers for
+DataFrames whose schema is only known at runtime.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema" title="dfguard.pyspark.schema.SparkSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">SparkSchema</span></code></a>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>struct</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.validate">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_or_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Compare a DataFrame or StructType against this schema.</p>
+<p>Returns a list of errors; an empty list means the schema is valid.
+When <code class="docutils literal notranslate"><span class="pre">subset=True</span></code> (default), extra columns beyond the declared schema are fine.
+When <code class="docutils literal notranslate"><span class="pre">subset=False</span></code>, extra columns are also reported as errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">_SchemaError</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df_or_schema</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.assert_valid">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">assert_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_or_schema</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.assert_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.assert_valid" title="Link to this definition">¶</a></dt>
+<dd><p>Like <code class="docutils literal notranslate"><span class="pre">validate</span></code> but raises <code class="docutils literal notranslate"><span class="pre">SchemaValidationError</span></code> on the first failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df_or_schema</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>history</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.empty">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spark</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.empty" title="Link to this definition">¶</a></dt>
+<dd><p>Return an empty typed dataset instance with this schema and zero rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>spark</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.to_code">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_code</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.to_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.to_code" title="Link to this definition">¶</a></dt>
+<dd><p>Generate valid Python source code for this schema class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pyspark.schema.SparkSchema.diff">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pyspark/schema.html#SparkSchema.diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pyspark.schema.SparkSchema.diff" title="Link to this definition">¶</a></dt>
+<dd><p>Return a human-readable diff between two SparkSchema classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>other</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema" title="dfguard.pyspark.schema.SparkSchema"><em>SparkSchema</em></a><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<input id="sd-tab-item-4" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-4">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">label</span>    <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()</span>
+    <span class="nb">zip</span>      <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dfguard.pandas.schema.</span></span><span class="sig-name descname"><span class="pre">PandasSchema</span></span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema" title="Link to this definition">¶</a></dt>
+<dd><p>Declare a pandas DataFrame’s expected shape as a Python class.</p>
+<p>Use this when you want to write down a schema without a live DataFrame.
+<code class="docutils literal notranslate"><span class="pre">PandasSchema</span></code> uses <strong>subset matching</strong>: the DataFrame must have every
+declared column, but extra columns are fine.  This mirrors <code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code>’s
+contract: declare what matters, ignore what doesn’t.</p>
+<p>Annotation form (standard):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PandasSchema</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">enforce</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span><span class="p">:</span>  <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span><span class="p">:</span>    <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">name</span><span class="p">:</span>      <span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()</span>
+    <span class="n">active</span><span class="p">:</span>    <span class="n">pd</span><span class="o">.</span><span class="n">BooleanDtype</span><span class="p">()</span>
+    <span class="n">tags</span><span class="p">:</span>      <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>                      <span class="c1"># object dtype, holds str lists</span>
+    <span class="n">zip_code</span><span class="p">:</span>  <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()]</span>     <span class="c1"># nullable</span>
+
+<span class="nd">@enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Assignment form (avoids Pylance <code class="docutils literal notranslate"><span class="pre">reportInvalidTypeForm</span></code> warnings):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">name</span>     <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Column-name aliasing (when the column name is not a valid identifier):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="kn">import</span> <span class="n">PandasSchema</span><span class="p">,</span> <span class="n">alias</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">first_name</span>    <span class="o">=</span> <span class="n">alias</span><span class="p">(</span><span class="s2">&quot;First Name&quot;</span><span class="p">,</span>   <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;object&quot;</span><span class="p">))</span>
+    <span class="n">order_id</span>      <span class="o">=</span> <span class="n">alias</span><span class="p">(</span><span class="s2">&quot;order-id&quot;</span><span class="p">,</span>     <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">))</span>
+    <span class="n">revenue</span>       <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>   <span class="c1"># no alias needed</span>
+</pre></div>
+</div>
+<p>Child classes inherit all parent fields:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>
+    <span class="n">revenue</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>   <span class="c1"># adds revenue, keeps all parent fields</span>
+</pre></div>
+</div>
+<section id="nullable-columns">
+<h3>Nullable columns<a class="headerlink" href="#nullable-columns" title="Link to this heading">¶</a></h3>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Optional[dtype]</span></code> from <code class="docutils literal notranslate"><span class="pre">dfguard.pandas</span></code> for dtype <em>instances</em>
+(e.g. <code class="docutils literal notranslate"><span class="pre">pd.StringDtype()</span></code>) since <code class="docutils literal notranslate"><span class="pre">typing.Optional</span></code> rejects non-type args.
+For numpy scalar <em>types</em> (e.g. <code class="docutils literal notranslate"><span class="pre">np.int64</span></code>), both work:
+<code class="docutils literal notranslate"><span class="pre">Optional[np.int64]</span></code> and the native <code class="docutils literal notranslate"><span class="pre">np.int64</span> <span class="pre">|</span> <span class="pre">None</span></code> syntax.</p>
+<p>Pandas extension dtypes (<code class="docutils literal notranslate"><span class="pre">pd.Int64Dtype()</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.StringDtype()</span></code>, etc.)
+are inherently nullable and do not require wrapping in <code class="docutils literal notranslate"><span class="pre">Optional</span></code>.</p>
+</section>
+<section id="supported-annotations">
+<h3>Supported annotations<a class="headerlink" href="#supported-annotations" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>numpy dtype instances:    <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;int64&quot;)</span></code>, <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;float64&quot;)</span></code></p></li>
+<li><p>numpy scalar types:       <code class="docutils literal notranslate"><span class="pre">np.int64</span></code>, <code class="docutils literal notranslate"><span class="pre">np.float32</span></code>, <code class="docutils literal notranslate"><span class="pre">np.bool_</span></code></p></li>
+<li><p>pandas extension dtypes:  <code class="docutils literal notranslate"><span class="pre">pd.StringDtype()</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.Int64Dtype()</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.BooleanDtype()</span></code></p></li>
+<li><p>Python builtins:          <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">bool</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code></p></li>
+<li><p>Python generic types:     <code class="docutils literal notranslate"><span class="pre">list[str]</span></code>, <code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">Any]</span></code>  (object dtype)</p></li>
+<li><p>Datetime:                 <code class="docutils literal notranslate"><span class="pre">datetime.datetime</span></code>, <code class="docutils literal notranslate"><span class="pre">pd.Timestamp</span></code></p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Requires <strong>pandas &gt;= 2.0</strong>.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.to_dtype_dict">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_dtype_dict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.to_dtype_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.to_dtype_dict" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">{column_name:</span> <span class="pre">dtype}</span></code> for this schema. Cached after first call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.to_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_struct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.to_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">{column_name:</span> <span class="pre">dtype}</span></code> for this schema. Cached after first call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.from_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_struct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GeneratedSchema'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.from_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Create a <code class="docutils literal notranslate"><span class="pre">PandasSchema</span></code> subclass from a <code class="docutils literal notranslate"><span class="pre">{col:</span> <span class="pre">dtype}</span></code> dict.</p>
+<p>Column names that are not valid Python identifiers are automatically
+sanitized and wrapped with <code class="docutils literal notranslate"><span class="pre">alias()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<a class="reference internal" href="#dfguard.pandas.schema.PandasSchema" title="dfguard.pandas.schema.PandasSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">PandasSchema</span></code></a>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>dtypes</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a><em>]</em>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.validate">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Compare a DataFrame against this schema.</p>
+<p>Returns a list of errors; an empty list means the schema is valid.
+When <code class="docutils literal notranslate"><span class="pre">subset=True</span></code> (default), extra columns are fine.
+When <code class="docutils literal notranslate"><span class="pre">subset=False</span></code>, extra columns are also reported as errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">_SchemaError</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.assert_valid">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">assert_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.assert_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.assert_valid" title="Link to this definition">¶</a></dt>
+<dd><p>Like <code class="docutils literal notranslate"><span class="pre">validate</span></code> but raises <code class="docutils literal notranslate"><span class="pre">SchemaValidationError</span></code> on failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>history</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.empty">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.empty" title="Link to this definition">¶</a></dt>
+<dd><p>Return an empty DataFrame with this schema and zero rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.to_code">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_code</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.to_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.to_code" title="Link to this definition">¶</a></dt>
+<dd><p>Generate valid Python source code for this schema class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.pandas.schema.PandasSchema.diff">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/pandas/schema.html#PandasSchema.diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.pandas.schema.PandasSchema.diff" title="Link to this definition">¶</a></dt>
+<dd><p>Return a human-readable diff between two PandasSchema classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>other</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema" title="dfguard.pandas.schema.PandasSchema"><em>PandasSchema</em></a><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</div>
+<input id="sd-tab-item-5" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-5">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">tags</span>     <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">)</span>
+    <span class="nb">zip</span>      <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">]</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dfguard.polars.schema.</span></span><span class="sig-name descname"><span class="pre">PolarsSchema</span></span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema" title="Link to this definition">¶</a></dt>
+<dd><p>Declare a Polars DataFrame’s expected shape as a Python class.</p>
+<p>Uses <strong>subset matching</strong>: the DataFrame must have every declared column with
+matching dtype, but extra columns are fine. Use <code class="docutils literal notranslate"><span class="pre">schema_of(df)</span></code> for exact
+matching (no extra columns allowed).</p>
+<p>Annotation form (standard):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolarsSchema</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">enforce</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">tags</span><span class="p">:</span>     <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">)</span>   <span class="c1"># first-class nested type</span>
+    <span class="n">name</span><span class="p">:</span>     <span class="n">Optional</span><span class="p">[</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">]</span>  <span class="c1"># explicitly nullable</span>
+
+<span class="nd">@enforce</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">OrderSchema</span><span class="p">):</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Assignment form (avoids Pylance <code class="docutils literal notranslate"><span class="pre">reportInvalidTypeForm</span></code> on instance-form dtypes):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">tags</span>     <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Column-name aliasing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="kn">import</span> <span class="n">PolarsSchema</span><span class="p">,</span> <span class="n">alias</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">alias</span><span class="p">(</span><span class="s2">&quot;First Name&quot;</span><span class="p">,</span> <span class="n">pl</span><span class="o">.</span><span class="n">String</span><span class="p">)</span>
+    <span class="n">order_id</span>   <span class="o">=</span> <span class="n">alias</span><span class="p">(</span><span class="s2">&quot;order-id&quot;</span><span class="p">,</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Child classes inherit all parent fields:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>
+    <span class="n">revenue</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+</pre></div>
+</div>
+<section id="python-builtins-and-generics">
+<h3>Python builtins and generics<a class="headerlink" href="#python-builtins-and-generics" title="Link to this heading">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">int</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.Float64</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.String</span></code>,
+<code class="docutils literal notranslate"><span class="pre">bool</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.Boolean</span></code>, <code class="docutils literal notranslate"><span class="pre">bytes</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.Binary</span></code>.
+<code class="docutils literal notranslate"><span class="pre">list[T]</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.List(T)</span></code>.  <code class="docutils literal notranslate"><span class="pre">dict</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">pl.Object</span></code>.</p>
+</section>
+<section id="nullability">
+<h3>Nullability<a class="headerlink" href="#nullability" title="Link to this heading">¶</a></h3>
+<p>All Polars columns are physically nullable. Use <code class="docutils literal notranslate"><span class="pre">Optional[T]</span></code> to <em>declare</em>
+that nulls are expected. <code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">|</span> <span class="pre">None</span></code> (Python 3.11 native union) also works.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Requires <strong>Polars &gt;= 1.0</strong>.</p>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.to_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_struct</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.to_struct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.to_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">{col:</span> <span class="pre">polars_dtype}</span></code> for this schema. Cached after first call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a>]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.from_struct">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_struct</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">struct</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'GeneratedSchema'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.from_struct"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.from_struct" title="Link to this definition">¶</a></dt>
+<dd><p>Create a <code class="docutils literal notranslate"><span class="pre">PolarsSchema</span></code> subclass from a <code class="docutils literal notranslate"><span class="pre">{col:</span> <span class="pre">polars_dtype}</span></code> dict.</p>
+<p>Column names that are not valid Python identifiers are automatically
+sanitized and wrapped with <code class="docutils literal notranslate"><span class="pre">alias()</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a>[<a class="reference internal" href="#dfguard.polars.schema.PolarsSchema" title="dfguard.polars.schema.PolarsSchema"><code class="xref py py-class docutils literal notranslate"><span class="pre">PolarsSchema</span></code></a>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>struct</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a><em>]</em>)</p></li>
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.validate">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.validate" title="Link to this definition">¶</a></dt>
+<dd><p>Compare a DataFrame or LazyFrame against this schema.</p>
+<p>Returns a list of errors; empty means valid.
+<code class="docutils literal notranslate"><span class="pre">subset=True</span></code> (default): extra columns are fine.
+<code class="docutils literal notranslate"><span class="pre">subset=False</span></code>: extra columns are also errors.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">_SchemaError</span></code>]</span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.assert_valid">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">assert_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">history</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.assert_valid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.assert_valid" title="Link to this definition">¶</a></dt>
+<dd><p>Like <code class="docutils literal notranslate"><span class="pre">validate</span></code> but raises <code class="docutils literal notranslate"><span class="pre">SchemaValidationError</span></code> on failure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>df</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+<li><p><strong>subset</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a>)</p></li>
+<li><p><strong>history</strong> (<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><em>Any</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.empty">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">empty</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.empty" title="Link to this definition">¶</a></dt>
+<dd><p>Return an empty Polars DataFrame with this schema and zero rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.to_code">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">to_code</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.to_code"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.to_code" title="Link to this definition">¶</a></dt>
+<dd><p>Generate valid Python source code for this schema class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dfguard.polars.schema.PolarsSchema.diff">
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">diff</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dfguard/polars/schema.html#PolarsSchema.diff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dfguard.polars.schema.PolarsSchema.diff" title="Link to this definition">¶</a></dt>
+<dd><p>Return a human-readable diff between two PolarsSchema classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>other</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema" title="dfguard.polars.schema.PolarsSchema"><em>PolarsSchema</em></a><em>]</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</div>
+</div>
+</section>
+</section>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="enforcement.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Enforcement</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="../kedro.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Using dfguard in Kedro</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2026, Nithin Rajendran
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Schemas</a><ul>
+<li><a class="reference internal" href="#schema-of">schema_of</a><ul>
+<li><a class="reference internal" href="#dfguard.pyspark.dataset.schema_of"><code class="docutils literal notranslate"><span class="pre">schema_of()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.dataset.schema_of"><code class="docutils literal notranslate"><span class="pre">schema_of()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.dataset.schema_of"><code class="docutils literal notranslate"><span class="pre">schema_of()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#schema-class">Schema class</a><ul>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema"><code class="docutils literal notranslate"><span class="pre">SparkSchema</span></code></a><ul>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.to_struct"><code class="docutils literal notranslate"><span class="pre">SparkSchema.to_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.from_struct"><code class="docutils literal notranslate"><span class="pre">SparkSchema.from_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.validate"><code class="docutils literal notranslate"><span class="pre">SparkSchema.validate()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.assert_valid"><code class="docutils literal notranslate"><span class="pre">SparkSchema.assert_valid()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.empty"><code class="docutils literal notranslate"><span class="pre">SparkSchema.empty()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.to_code"><code class="docutils literal notranslate"><span class="pre">SparkSchema.to_code()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pyspark.schema.SparkSchema.diff"><code class="docutils literal notranslate"><span class="pre">SparkSchema.diff()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema"><code class="docutils literal notranslate"><span class="pre">PandasSchema</span></code></a><ul>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.to_dtype_dict"><code class="docutils literal notranslate"><span class="pre">PandasSchema.to_dtype_dict()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.to_struct"><code class="docutils literal notranslate"><span class="pre">PandasSchema.to_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.from_struct"><code class="docutils literal notranslate"><span class="pre">PandasSchema.from_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.validate"><code class="docutils literal notranslate"><span class="pre">PandasSchema.validate()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.assert_valid"><code class="docutils literal notranslate"><span class="pre">PandasSchema.assert_valid()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.empty"><code class="docutils literal notranslate"><span class="pre">PandasSchema.empty()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.to_code"><code class="docutils literal notranslate"><span class="pre">PandasSchema.to_code()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.pandas.schema.PandasSchema.diff"><code class="docutils literal notranslate"><span class="pre">PandasSchema.diff()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema"><code class="docutils literal notranslate"><span class="pre">PolarsSchema</span></code></a><ul>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.to_struct"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.to_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.from_struct"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.from_struct()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.validate"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.validate()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.assert_valid"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.assert_valid()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.empty"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.empty()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.to_code"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.to_code()</span></code></a></li>
+<li><a class="reference internal" href="#dfguard.polars.schema.PolarsSchema.diff"><code class="docutils literal notranslate"><span class="pre">PolarsSchema.diff()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="../_static/documentation_options.js?v=92734c54"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    </body>
+</html>

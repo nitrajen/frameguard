@@ -3,14 +3,23 @@ Quickstart
 
 .. code-block:: bash
 
-   pip install dfguard[pyspark]
+   pip install dfguard[pyspark]   # PySpark
+   pip install dfguard[pandas]    # pandas
+   pip install dfguard[polars]    # Polars
+   pip install dfguard[all]       # all backends
 
-Requires Python >= 3.10, PySpark >= 3.3.
+Requires Python >= 3.10.
 
-.. note::
+Interactive notebooks with end-to-end examples for each backend are available
+on GitHub:
 
-   dfguard currently supports **PySpark**. Support for additional DataFrame
-   libraries (pandas, polars, and others) is planned.
+- `PySpark quickstart notebook <https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/pyspark_quickstart.ipynb>`_
+- `pandas quickstart notebook <https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/pandas_quickstart.ipynb>`_
+- `Polars quickstart notebook <https://github.com/nitrajen/dfguard/blob/main/examples/notebooks/polars_quickstart.ipynb>`_
+
+The page below uses PySpark examples throughout. The API is identical across
+all backends: replace ``dfguard.pyspark`` with ``dfguard.pandas`` or
+``dfguard.polars``, and use the types your library ships with.
 
 All examples on this page assume the following setup:
 

@@ -8,6 +8,7 @@
         <title>dfguard.pyspark._enforcement - dfguard 0.1.2</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../../../_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
@@ -189,24 +190,22 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">dfguard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../types.html">Supported Types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../pipelines.html">Data Pipeline Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../airflow.html">Using dfguard in Airflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../kedro.html">Using dfguard in Kedro</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../../api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../../../api/pyspark/index.html">PySpark</a><input aria-label="Toggle navigation of PySpark" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/schemas.html">Schemas</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/enforcement.html">Enforcement</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/dataset.html">Dataset</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/decorators.html">Decorators</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/history.html">Schema History</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../../../api/pyspark/exceptions.html">Exceptions</a></li>
 </ul>
-</li>
-</ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/schemas.html">Schemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/enforcement.html">Enforcement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -256,7 +255,7 @@
 <span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
 
 <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># dfg.disarm() / dfg.arm() controls this</span>
-<span class="n">_ARMED</span>   <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># tracks whether arm() has been called</span>
+<span class="n">_ARMED</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>  <span class="c1"># tracks which packages have been armed</span>
 <span class="n">_SUBSET</span>  <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># dfg.arm(subset=...) sets the global default; function-level overrides this</span>
 
 <span class="n">_UNSET</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>  <span class="c1"># sentinel: &quot;no function-level override, use global&quot;</span>
@@ -306,7 +305,7 @@
 
 
 <div class="viewcode-block" id="arm">
-<a class="viewcode-back" href="../../../api/pyspark/enforcement.html#dfguard.pyspark._enforcement.arm">[docs]</a>
+<a class="viewcode-back" href="../../../api/enforcement.html#dfguard.pyspark._enforcement.arm">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">arm</span><span class="p">(</span>
     <span class="n">module</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -337,15 +336,9 @@
 
 <span class="sd">        dfg.arm(package=&quot;my_pipeline.nodes&quot;)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">global</span> <span class="n">_SUBSET</span><span class="p">,</span> <span class="n">_ENABLED</span><span class="p">,</span> <span class="n">_ARMED</span>
+    <span class="k">global</span> <span class="n">_SUBSET</span><span class="p">,</span> <span class="n">_ENABLED</span>
     <span class="n">_SUBSET</span> <span class="o">=</span> <span class="n">subset</span>
     <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
-
-    <span class="k">if</span> <span class="n">_ARMED</span><span class="p">:</span>
-        <span class="c1"># Already armed: just re-enable and update subset, no re-walking needed.</span>
-        <span class="k">return</span>
-
-    <span class="n">_ARMED</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">ModuleType</span><span class="p">):</span>
         <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">),</span> <span class="n">subset</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">)</span>
@@ -366,6 +359,10 @@
         <span class="p">)</span>
         <span class="k">return</span>
 
+    <span class="k">if</span> <span class="n">package</span> <span class="ow">in</span> <span class="n">_ARMED</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_ARMED</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+
     <span class="n">pkg</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
     <span class="n">_arm_module_dict</span><span class="p">(</span><span class="nb">vars</span><span class="p">(</span><span class="n">pkg</span><span class="p">),</span> <span class="n">subset</span><span class="o">=</span><span class="n">_UNSET</span><span class="p">)</span>
     <span class="n">pkg_path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;__path__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -382,10 +379,13 @@
 
 
 
+<div class="viewcode-block" id="disarm">
+<a class="viewcode-back" href="../../../api/enforcement.html#dfguard.pyspark._enforcement.disarm">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">disarm</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Turn off all enforcement globally. Call arm() to re-enable.&quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">_ENABLED</span>
-    <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_ENABLED</span> <span class="o">=</span> <span class="kc">False</span></div>
+
 
 
 <span class="nd">@overload</span>
@@ -396,7 +396,7 @@
 
 
 <div class="viewcode-block" id="enforce">
-<a class="viewcode-back" href="../../../api/pyspark/enforcement.html#dfguard.pyspark._enforcement.enforce">[docs]</a>
+<a class="viewcode-back" href="../../../api/enforcement.html#dfguard.pyspark._enforcement.enforce">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">enforce</span><span class="p">(</span>
     <span class="n">func</span><span class="p">:</span> <span class="n">F</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -532,5 +532,6 @@
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>

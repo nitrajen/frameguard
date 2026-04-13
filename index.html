@@ -9,6 +9,7 @@
         <title>dfguard 0.1.2</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
     
@@ -190,24 +191,22 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
-<ul>
+  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">dfguard</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Supported Types</a></li>
 <li class="toctree-l1"><a class="reference internal" href="pipelines.html">Data Pipeline Usage</a></li>
 <li class="toctree-l1"><a class="reference internal" href="airflow.html">Using dfguard in Airflow</a></li>
 <li class="toctree-l1"><a class="reference internal" href="kedro.html">Using dfguard in Kedro</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="api/index.html">API Reference</a><input aria-label="Toggle navigation of API Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="api/pyspark/index.html">PySpark</a><input aria-label="Toggle navigation of PySpark" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/schemas.html">Schemas</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/enforcement.html">Enforcement</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/dataset.html">Dataset</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/decorators.html">Decorators</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/history.html">Schema History</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/pyspark/exceptions.html">Exceptions</a></li>
 </ul>
-</li>
-</ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api/schemas.html">Schemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/enforcement.html">Enforcement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">Exceptions</a></li>
 </ul>
 
 </div>
@@ -253,11 +252,50 @@ without complaint, the job runs, and the crash surfaces somewhere downstream
 with an error that tells you nothing about where the mismatch started.</p>
 <p><strong>dfguard moves that failure to the function call.</strong> The wrong DataFrame is
 rejected immediately with a precise error: which function, which argument, what
-schema was expected, what arrived.</p>
-<p>Currently supports PySpark. pandas and polars support coming soon.</p>
+schema was expected, what arrived. <strong>Lightweight</strong>: enforcement is pure metadata
+inspection — dfguard reads the schema struct from your DataFrame, no data is
+scanned, no Spark jobs are triggered. Unlike pandera, which introduces its own
+type system, dfguard uses the types your library already ships with:
+<code class="docutils literal notranslate"><span class="pre">T.LongType()</span></code> for PySpark, <code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code> for Polars, <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;int64&quot;)</span></code>
+for pandas.</p>
+<section id="compatibility">
+<h2>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading">¶</a></h2>
+<div class="table-wrapper colwidths-given docutils container">
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 37.5%" />
+<col style="width: 31.2%" />
+<col style="width: 31.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Backend</p></th>
+<th class="head"><p>Version</p></th>
+<th class="head"><p>Python</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PySpark</p></td>
+<td><p>&gt;= 3.3</p></td>
+<td><p>&gt;= 3.10</p></td>
+</tr>
+<tr class="row-odd"><td><p>pandas</p></td>
+<td><p>&gt;= 1.5</p></td>
+<td><p>&gt;= 3.10</p></td>
+</tr>
+<tr class="row-even"><td><p>Polars</p></td>
+<td><p>&gt;= 0.20</p></td>
+<td><p>&gt;= 3.10</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<hr class="docutils" />
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-0" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-0">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pyspark</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pyspark.sql</span><span class="w"> </span><span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">functions</span> <span class="k">as</span> <span class="n">F</span><span class="p">,</span> <span class="n">types</span> <span class="k">as</span> <span class="n">T</span>
 
 <span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
 <span class="n">raw_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
@@ -265,20 +303,22 @@ schema was expected, what arrived.</p>
     <span class="s2">&quot;order_id LONG, amount DOUBLE, quantity INT&quot;</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1"># Declare the input contract upfront -- no live DataFrame needed</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
-    <span class="n">quantity</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
+<span class="c1"># Option A: arm() -- covers the whole package, no decorator on each function</span>
+<span class="c1"># Place dfg.arm() in my_pipeline/__init__.py</span>
+<span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>
 
-<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">IntegerType</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>                            <span class="c1"># enforced by arm()</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
 
-<span class="c1"># Capture the output schema from the live result</span>
+<span class="c1"># captures schema of the returned DataFrame</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
 
-<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                                          <span class="c1"># subset=True by default</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_vip&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
 
@@ -288,81 +328,163 @@ schema was expected, what arrived.</p>
 <span class="c1">#   received: order_id:bigint, amount:double, quantity:int</span>
 </pre></div>
 </div>
+</div>
+<input id="sd-tab-item-1" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-1">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;float64&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int64&quot;</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="c1"># Option A: arm() -- covers the whole package, no decorator on each function</span>
+<span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">label</span>    <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()</span>         <span class="c1"># nullable pandas string</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>              <span class="c1"># enforced by arm()</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
+
+<span class="c1"># captures schema of the returned DataFrame</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                            <span class="c1"># subset=True by default</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">flag_high_value</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="c1"># TypeError: Schema mismatch in flag_high_value() argument &#39;df&#39;:</span>
+<span class="c1">#   expected: order_id:int64, amount:float64, quantity:int64, revenue:float64</span>
+<span class="c1">#   received: order_id:int64, amount:float64, quantity:int64</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-2" name="sd-tab-set-0" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-2">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dfguard.polars</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dfg</span>
+
+<span class="n">raw_df</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">&quot;order_id&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int64</span><span class="p">),</span>
+    <span class="s2">&quot;amount&quot;</span><span class="p">:</span>   <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mf">10.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">8.5</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Float64</span><span class="p">),</span>
+    <span class="s2">&quot;quantity&quot;</span><span class="p">:</span> <span class="n">pl</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">Int32</span><span class="p">),</span>
+<span class="p">})</span>
+
+<span class="c1"># Option A: arm() -- covers the whole package, no decorator on each function</span>
+<span class="n">dfg</span><span class="o">.</span><span class="n">arm</span><span class="p">()</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">RawSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+    <span class="n">quantity</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int32</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>   <span class="c1"># enforced by arm()</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;quantity&quot;</span><span class="p">))</span>
+
+<span class="c1"># captures schema of the returned DataFrame</span>
+<span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
+
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                                  <span class="c1"># subset=True by default</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">flag_high_value</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+<span class="c1"># TypeError: Schema mismatch in flag_high_value() argument &#39;df&#39;:</span>
+<span class="c1">#   expected: order_id:Int64, amount:Float64, quantity:Int32, revenue:Float64</span>
+<span class="c1">#   received: order_id:Int64, amount:Float64, quantity:Int32</span>
+</pre></div>
+</div>
+</div>
+</div>
 <p>No validation logic inside the functions.
 The wrong DataFrame simply cannot enter the wrong function.</p>
-<p>For package-wide enforcement without decorating each function, call
-<code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> once from your package entry point – see the <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dfguard[pyspark]</span></code> installs only PySpark, which you already
-have. Enforcement is pure Python <code class="docutils literal notranslate"><span class="pre">isinstance()</span></code> checks. Only schema-annotated
-arguments are validated; <code class="docutils literal notranslate"><span class="pre">str</span></code>, <code class="docutils literal notranslate"><span class="pre">int</span></code>, and everything else passes through
-untouched.</p>
+<p>Call <code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> once from your package <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> to protect the whole
+package. No decorator needed on each function. See the <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a>.</p>
+</section>
 <section id="two-ways-to-define-a-schema">
 <h2>Two ways to define a schema<a class="headerlink" href="#two-ways-to-define-a-schema" title="Link to this heading">¶</a></h2>
-<p><strong>Capture from a live DataFrame</strong> (exact matching, snapshot at each stage):</p>
+<p><strong>Option A: Capture from a live DataFrame</strong></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RawSchema</span>      <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enriched_df</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>Declare upfront</strong> (no DataFrame required):</p>
+<p>Useful for quick scripts and existing code where you already have a DataFrame.
+No boilerplate. The schema is locked to that DataFrame’s shape at that moment.</p>
+<p><strong>Option B: Declare upfront as a class</strong></p>
+<div class="sd-tab-set docutils">
+<input checked="checked" id="sd-tab-item-3" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pyspark" for="sd-tab-item-3">
+PySpark</label><div class="sd-tab-content docutils">
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">SparkSchema</span><span class="p">):</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
-    <span class="n">amount</span><span class="p">:</span>   <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">LongType</span><span class="p">()</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
-    <span class="n">revenue</span><span class="p">:</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">DoubleType</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">dfg.schema_of</span></code> is precise: exact schema, exact stage.
-<code class="docutils literal notranslate"><span class="pre">dfg.SparkSchema</span></code> is contractual: declare what you need upfront.</p>
+</div>
+<input id="sd-tab-item-4" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="pandas" for="sd-tab-item-4">
+pandas</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PandasSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<input id="sd-tab-item-5" name="sd-tab-set-1" type="radio">
+<label class="sd-tab-label" data-sync-group="tab" data-sync-id="polars" for="sd-tab-item-5">
+Polars</label><div class="sd-tab-content docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">OrderSchema</span><span class="p">(</span><span class="n">dfg</span><span class="o">.</span><span class="n">PolarsSchema</span><span class="p">):</span>
+    <span class="n">order_id</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Int64</span>
+    <span class="n">amount</span>   <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EnrichedSchema</span><span class="p">(</span><span class="n">OrderSchema</span><span class="p">):</span>   <span class="c1"># inherits all parent fields</span>
+    <span class="n">revenue</span> <span class="o">=</span> <span class="n">pl</span><span class="o">.</span><span class="n">Float64</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>No live DataFrame needed. Subclasses inherit parent fields. Supports complex
+nested types. Works with IDE autocomplete and static analysis.</p>
+<p><strong>For data pipelines, Option B is preferred.</strong> Schemas are defined once,
+shared across modules, visible in version control, and discoverable by your
+IDE. Option A is convenient for exploration or when adding dfguard to existing
+code you do not want to change.</p>
 <p>See the <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> for the full walkthrough.</p>
 <div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">dfguard</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="types.html">Supported Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Data Pipeline Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="airflow.html">Using dfguard in Airflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="kedro.html">Using dfguard in Kedro</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#defining-a-schema-type">Defining a schema type</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#enforcement">Enforcement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#the-subset-parameter">The subset parameter</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#multi-stage-pipeline">Multi-stage pipeline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#validating-at-load-time">Validating at load time</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#disabling-enforcement">Disabling enforcement</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#schema-history">Schema history</a></li>
-<li class="toctree-l2"><a class="reference internal" href="quickstart.html#sparkschema-utilities">SparkSchema utilities</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Data Pipeline Usage</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="pipelines.html#quick-reference">Quick reference</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pipelines.html#one-thing-to-know-before-you-start">One thing to know before you start</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pipelines.html#kedro">Kedro</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pipelines.html#airflow">Airflow</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pipelines.html#global-control">Global control</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="airflow.html">Using dfguard in Airflow</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#file-structure">File structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#pipeline-init-py">pipeline/__init__.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#schemas-py">schemas.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#transforms-py">transforms.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#orders-dag-py">orders_dag.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#running-locally">Running locally</a></li>
-<li class="toctree-l2"><a class="reference internal" href="airflow.html#what-a-schema-error-looks-like">What a schema error looks like</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="kedro.html">Using dfguard in Kedro</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#file-structure">File structure</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#schemas-py">schemas.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#nodes-py">nodes.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#pipeline-py">pipeline.py</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#catalog-yml">catalog.yml</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#running-the-pipeline">Running the pipeline</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#what-a-schema-error-looks-like">What a schema error looks like</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#where-to-define-schemas">Where to define schemas</a></li>
-<li class="toctree-l2"><a class="reference internal" href="kedro.html#using-dfg-enforce-instead-of-dfg-arm">Using &#64;dfg.enforce instead of dfg.arm()</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="api/index.html">API Reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/pyspark/index.html">PySpark</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="api/schemas.html">Schemas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/enforcement.html">Enforcement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/dataset.html">Dataset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/history.html">History</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/exceptions.html">Exceptions</a></li>
 </ul>
 </div>
 </section>
@@ -414,7 +536,10 @@ untouched.</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">dfguard</a><ul>
-<li><a class="reference internal" href="#two-ways-to-define-a-schema">Two ways to define a schema</a></li>
+<li><a class="reference internal" href="#compatibility">Compatibility</a></li>
+<li><a class="reference internal" href="#two-ways-to-define-a-schema">Two ways to define a schema</a><ul>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -430,5 +555,6 @@ untouched.</p>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
     </body>
 </html>
