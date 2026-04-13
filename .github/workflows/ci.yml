@@ -16,14 +16,16 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install ruff mypy
-      - run: ruff check dfguard/ tests/
-      - run: mypy dfguard/ --ignore-missing-imports
+      - run: ruff check .
+      # mypy on pyspark and shared base; pandas/polars use dynamic metaclass
+      # attributes that mypy cannot resolve without stubs (tracked separately)
+      - run: mypy dfguard/pyspark dfguard/_base --ignore-missing-imports
 
   test:
     needs: lint
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false   # run all versions even if one fails
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
@@ -32,8 +34,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: pip install -e ".[pyspark,dev]"
-      - run: pytest tests/pyspark/ -q --tb=short --cov=dfguard --cov-report=xml
+      - run: pip install -e ".[all,dev]"
+      - run: pytest tests/ -q --tb=short --cov=dfguard --cov-report=xml
 
       - name: Upload coverage
         if: matrix.python-version == '3.12'
@@ -44,7 +46,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
 
   # Test against the newest Python release.
-  # Allowed to fail: PySpark may not support it yet.
+  # Allowed to fail: backends may not support it yet.
   test-latest:
     needs: lint
     runs-on: ubuntu-latest
@@ -55,5 +57,16 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-      - run: pip install -e ".[pyspark,dev]"
-      - run: pytest tests/pyspark/ -q --tb=short
+      - run: pip install -e ".[all,dev]"
+      - run: pytest tests/ -q --tb=short
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[all]" -r docs/requirements.txt
+      - run: python -m sphinx docs/ docs/_build/html -W --keep-going

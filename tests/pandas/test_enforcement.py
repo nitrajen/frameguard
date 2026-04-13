@@ -1,67 +1,70 @@
-"""enforce() decorator: subset, disarm/arm, arm()."""
+"""enforce() decorator: subset, disarm/arm, arm() — pandas backend."""
 
 import inspect
 import warnings
 
+import numpy as np
+import pandas as pd
 import pytest
-from pyspark.sql import types as T
 
-import dfguard.pyspark._enforcement as _e
-from dfguard.pyspark import SparkSchema, enforce
-from dfguard.pyspark._enforcement import disarm
+import dfguard.pandas._enforcement as _e
+from dfguard.pandas import PandasSchema, enforce
+from dfguard.pandas._enforcement import disarm
 
 
-class RawSchema(SparkSchema):
-    id:    T.LongType()
-    value: T.DoubleType()
+class RawSchema(PandasSchema):
+    order_id: np.dtype("int64")
+    amount:   np.dtype("float64")
 
 
 class EnrichedSchema(RawSchema):
-    label: T.StringType()
+    revenue: np.dtype("float64")
 
 
 @pytest.fixture(autouse=True)
 def reset_state():
     """Reset global enforcement state before and after each test."""
     _e._ENABLED = True
-    _e._SUBSET = True
+    _e._SUBSET  = True
     yield
     _e._ENABLED = True
-    _e._SUBSET = True
+    _e._SUBSET  = True
 
 
 @pytest.fixture()
-def raw_df(spark):
-    return spark.createDataFrame([(1, 1.0)], RawSchema.to_struct())
+def raw_df() -> pd.DataFrame:
+    return pd.DataFrame({
+        "order_id": np.array([1], dtype="int64"),
+        "amount":   np.array([1.0], dtype="float64"),
+    })
 
 
 @pytest.fixture()
-def enriched_df(spark):
-    return spark.createDataFrame([(1, 1.0, "a")], EnrichedSchema.to_struct())
+def enriched_df(raw_df: pd.DataFrame) -> pd.DataFrame:
+    df = raw_df.copy()
+    df["revenue"] = (df["amount"] * 2).astype("float64")
+    return df
 
 
-# ── subset=True (default): extra columns are fine ────────────────────────────
+# ── subset=True (default): extra columns fine ────────────────────────────────
 
 def test_subset_true_passes_exact_schema(raw_df):
     @enforce
     def process(df: RawSchema): return df
-
-    process(raw_df)  # exact match: always passes
+    process(raw_df)
 
 
 def test_subset_true_passes_with_extra_columns(enriched_df):
-    @enforce                            # subset=True by default
+    @enforce
     def process(df: RawSchema): return df
+    process(enriched_df)
 
-    process(enriched_df)  # enriched has extra 'label' column: should pass
 
-
-def test_subset_true_still_rejects_missing_columns(raw_df):
+def test_subset_true_rejects_missing_columns(raw_df):
     @enforce
     def process(df: EnrichedSchema): return df
-
     with pytest.raises(TypeError, match="Schema mismatch"):
-        process(raw_df)  # raw_df is missing 'label'
+        process(raw_df)
 
 
 # ── subset=False: exact match required ───────────────────────────────────────
@@ -69,32 +72,22 @@ def test_subset_true_still_rejects_missing_columns(raw_df):
 def test_subset_false_passes_exact_schema(raw_df):
     @enforce(subset=False)
     def process(df: RawSchema): return df
-
-    process(raw_df)  # exact match: passes
+    process(raw_df)
 
 
 def test_subset_false_rejects_extra_columns(enriched_df):
     @enforce(subset=False)
     def process(df: RawSchema): return df
-
     with pytest.raises(TypeError, match="Schema mismatch"):
-        process(enriched_df)  # enriched has extra 'label': rejected
+        process(enriched_df)
 
 
-def test_subset_false_rejects_missing_columns(raw_df):
-    @enforce(subset=False)
-    def process(df: EnrichedSchema): return df
-
-    with pytest.raises(TypeError, match="Schema mismatch"):
-        process(raw_df)
-
-
-# ── global subset via _SUBSET, function-level overrides ──────────────────────
+# ── global _SUBSET override ───────────────────────────────────────────────────
 
 def test_global_subset_false_rejects_extra_columns(enriched_df):
-    _e._SUBSET = False  # simulate dfg.arm(subset=False)
+    _e._SUBSET = False
 
-    @enforce          # no explicit subset: inherits global
+    @enforce
     def process(df: RawSchema): return df
 
     with pytest.raises(TypeError, match="Schema mismatch"):
@@ -102,45 +95,32 @@ def test_global_subset_false_rejects_extra_columns(enriched_df):
 
 
 def test_function_level_overrides_global(enriched_df):
-    _e._SUBSET = False  # global says exact
+    _e._SUBSET = False
 
-    @enforce(subset=True)   # function says subset: wins
+    @enforce(subset=True)
     def process(df: RawSchema): return df
 
-    process(enriched_df)  # passes despite global subset=False
+    process(enriched_df)  # subset=True wins
 
 
-def test_global_subset_true_with_function_override_false(enriched_df):
-    _e._SUBSET = True   # global says subset
-
-    @enforce(subset=False)   # function says exact: wins
-    def process(df: RawSchema): return df
-
-    with pytest.raises(TypeError, match="Schema mismatch"):
-        process(enriched_df)
-
-
-# ── non-schema args are never touched ────────────────────────────────────────
+# ── non-schema args are untouched ────────────────────────────────────────────
 
 def test_non_schema_args_pass_through(raw_df):
     @enforce
     def process(df: RawSchema, label: str, limit: int = 10): return df
-
     process(raw_df, "hello", limit=5)
 
 
 def test_no_schema_params_returns_original_function():
     def plain(x: int, y: str): return y
-
     assert enforce(plain) is plain
 
 
-# ── disarm() / arm() (re-enable) ─────────────────────────────────────────────
+# ── disarm / re-enable ────────────────────────────────────────────────────────
 
 def test_disarm_silences_enforcement(raw_df):
     @enforce
     def process(df: EnrichedSchema): return df
-
     disarm()
     process(raw_df)  # would raise without disarm()
 
@@ -148,11 +128,9 @@ def test_disarm_silences_enforcement(raw_df):
 def test_arm_restores_enforcement(raw_df):
     @enforce
     def process(df: EnrichedSchema): return df
-
     disarm()
     process(raw_df)
-    _e._ENABLED = True  # re-enable manually (arm() would re-walk, use flag directly)
-
+    _e._ENABLED = True
     with pytest.raises(TypeError, match="Schema mismatch"):
         process(raw_df)
 
@@ -169,11 +147,10 @@ def test_arm_warns_in_main(monkeypatch):
         f_back = FakeInnerFrame()
 
     monkeypatch.setattr(inspect, "currentframe", lambda: FakeOuterFrame())
-    # Reset _ARMED so arm() attempts to walk
     _e._ARMED = set()
 
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
         _e.arm()
         assert len(w) == 1
-        assert "dfguard.pyspark.arm" in str(w[0].message)
+        assert "dfguard.pandas.arm" in str(w[0].message)

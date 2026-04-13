@@ -5,9 +5,10 @@ decorator needed on most functions. @dfg.enforce(subset=False) is used
 where an exact schema match is required, such as before writing to storage.
 """
 
-import dfguard.pyspark as dfg
-from pyspark.sql import DataFrame, functions as F
+from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 
+import dfguard.pyspark as dfg
 from pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
 

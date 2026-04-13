@@ -39,6 +39,17 @@ def test_nullable_field():
     assert s["street"].nullable is False
 
 
+def test_optional_assignment_form_collected():
+    """Optional[...] in assignment form must appear in to_struct()."""
+    class S(SparkSchema):
+        name     = T.StringType()
+        zip_code = Optional[T.StringType()]
+
+    fields = {f.name: f for f in S.to_struct().fields}
+    assert "zip_code" in fields, "Optional field in assignment form was not collected"
+    assert fields["zip_code"].nullable is True
+
+
 def test_nested_struct():
     s = OrderSchema.to_struct()
     addr = s["address"].dataType

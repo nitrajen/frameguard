@@ -5,8 +5,9 @@ Schema contracts are enforced automatically from the type annotations.
 No @dfg.enforce decorator needed on each function.
 """
 
-import dfguard.pyspark as dfg
 from pyspark.sql import functions as F
+
+import dfguard.pyspark as dfg
 from orders_pipeline.schemas import EnrichedOrderSchema, RawOrderSchema
 
 

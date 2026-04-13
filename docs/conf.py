@@ -6,9 +6,9 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
+import datetime
 import os
 import sys
-import datetime
 
 import tomllib
 
@@ -30,6 +30,7 @@ extensions = [
     "sphinx.ext.viewcode",          # [source] links
     "sphinx.ext.intersphinx",       # cross-links to Python / PySpark docs
     "sphinx_autodoc_typehints",     # renders type hints from annotations
+    "sphinx_design",                # tab-set / tab-item directives
 ]
 
 templates_path = ['_templates']

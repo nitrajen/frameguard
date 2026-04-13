@@ -7,8 +7,8 @@ dfguard catches schema mismatches at the function call, before any
 processing begins.
 """
 
-import sys
 import os
+import sys
 from datetime import datetime
 
 from airflow import DAG
@@ -23,9 +23,9 @@ SUMMARY_PATH = "/tmp/orders_data/customer_summary.parquet"
 
 
 def task_enrich(**context):
-    from pyspark.sql import SparkSession
     from pipeline.schemas import RawOrderSchema
     from pipeline.transforms import enrich
+    from pyspark.sql import SparkSession
 
     spark = SparkSession.builder.master("local").appName("orders-enrich").getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")
@@ -41,9 +41,9 @@ def task_enrich(**context):
 
 
 def task_summarise(**context):
-    from pyspark.sql import SparkSession
     from pipeline.schemas import EnrichedOrderSchema
     from pipeline.transforms import summarise
+    from pyspark.sql import SparkSession
 
     spark = SparkSession.builder.master("local").appName("orders-summarise").getOrCreate()
     spark.sparkContext.setLogLevel("ERROR")

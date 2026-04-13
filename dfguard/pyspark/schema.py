@@ -16,6 +16,25 @@ class _SchemaError:
         return self.message
 
 
+def _collect_assignment_fields(cls: type) -> dict[str, Any]:
+    """Scan MRO for assignment-form fields (alias, DataType, or Optional wrapper)."""
+    from pyspark.sql import types as T
+
+    from dfguard._base._alias import alias as _AliasType
+    from dfguard.pyspark._nullable import _NullableAnnotation
+    collected: dict[str, Any] = {}
+    for base in reversed(cls.__mro__):
+        if base is object:
+            continue
+        own_annotations = set(getattr(base, "__annotations__", {}))
+        for k, v in vars(base).items():
+            if k.startswith("__") or k in own_annotations:
+                continue
+            if isinstance(v, (_AliasType, T.DataType, _NullableAnnotation)):  # noqa: UP038
+                collected[k] = v
+    return collected
+
+
 class _SparkSchemaMeta(type):
     """Collects annotations at class-definition time and caches the StructType."""
 
@@ -27,12 +46,13 @@ class _SparkSchemaMeta(type):
     ) -> _SparkSchemaMeta:
         cls = super().__new__(mcs, name, bases, namespace)
 
-        # Merge annotations from all bases in MRO order; child wins on conflict
+        # Merge annotation-form fields from MRO, then assignment-form fields
         merged: dict[str, Any] = {}
         for base in reversed(cls.__mro__):
             if base is object:
                 continue
             merged.update(getattr(base, "__annotations__", {}))
+        merged.update(_collect_assignment_fields(cls))
 
         cls._schema_fields: dict[str, Any] = {  # type: ignore[misc, attr-defined]
             k: v for k, v in merged.items() if not k.startswith("_")

@@ -14,7 +14,7 @@ from typing import Any, TypeVar, overload
 F = TypeVar("F", bound=Callable[..., Any])
 
 _ENABLED = True   # dfg.disarm() / dfg.arm() controls this
-_ARMED   = False  # tracks whether arm() has been called
+_ARMED: set[str] = set()  # tracks which packages have been armed
 _SUBSET  = True   # dfg.arm(subset=...) sets the global default; function-level overrides this
 
 _UNSET = object()  # sentinel: "no function-level override, use global"
@@ -93,15 +93,9 @@ def arm(
 
         dfg.arm(package="my_pipeline.nodes")
     """
-    global _SUBSET, _ENABLED, _ARMED
+    global _SUBSET, _ENABLED
     _SUBSET = subset
     _ENABLED = True
-
-    if _ARMED:
-        # Already armed: just re-enable and update subset, no re-walking needed.
-        return
-
-    _ARMED = True
 
     if isinstance(module, types.ModuleType):
         _arm_module_dict(vars(module), subset=_UNSET)
@@ -121,6 +115,10 @@ def arm(
             stacklevel=2,
         )
         return
+
+    if package in _ARMED:
+        return
+    _ARMED.add(package)
 
     pkg = importlib.import_module(package)
     _arm_module_dict(vars(pkg), subset=_UNSET)
