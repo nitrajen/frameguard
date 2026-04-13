@@ -9,7 +9,7 @@ description = "Runtime schema enforcement for Python DataFrames"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
-authors = [{ name = "Nithin Rajendran" }]
+authors = [{ name = "Nitrajen" }]
 dependencies = []
 
 [project.optional-dependencies]

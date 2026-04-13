@@ -1,10 +1,16 @@
 Dataset
 =======
 
-``dfg.dataset(df)`` wraps a DataFrame and records every schema-changing
-operation in ``schema_history``. The wrapper exposes the same mutation API
-as the underlying library; each method returns a new wrapped instance with
-an updated history entry.
+.. warning::
+
+   ``dataset()`` is an internal utility and is not part of the stable public API.
+   It may change or be removed in future releases.
+
+``dfg.dataset(df)`` wraps a DataFrame and records schema-changing operations
+in ``schema_history``. Schema tracking is limited to a fixed set of explicitly
+wrapped methods listed below. Calling any other method on the wrapper passes
+through to the underlying DataFrame but breaks the tracking chain: the returned
+object is a plain DataFrame, not a tracked dataset.
 
 .. tab-set::
 
@@ -13,20 +19,25 @@ an updated history entry.
 
       .. autofunction:: dfguard.pyspark.dataset._make_dataset
 
-      **Available methods:** ``withColumn``, ``withColumns``, ``drop``, ``select``,
-      ``filter``, ``where``, ``withColumnRenamed``, ``join``, ``union``,
-      ``unionByName``, ``groupBy``, ``orderBy``, ``sort``, ``limit``,
-      ``distinct``, ``dropDuplicates``, ``coalesce``, ``repartition``,
-      ``cache``, ``persist``, ``unpersist``, ``alias``
+      **Tracked methods:** ``withColumn``, ``withColumns``, ``withColumnRenamed``,
+      ``withColumnsRenamed``, ``withMetadata``, ``drop``, ``select``, ``selectExpr``,
+      ``toDF``, ``filter``, ``where``, ``limit``, ``sample``, ``distinct``,
+      ``dropDuplicates``, ``orderBy``, ``repartition``, ``repartitionByRange``,
+      ``coalesce``, ``union``, ``unionByName``, ``intersect``, ``intersectAll``,
+      ``subtract``, ``join``, ``crossJoin``, ``groupBy``, ``rollup``, ``cube``,
+      ``na``, ``stat``, ``transform``, ``unpivot``, ``agg``, ``count``, ``mean``,
+      ``avg``, ``sum``, ``min``, ``max``, ``pivot``, ``apply``, ``applyInPandas``
 
    .. tab-item:: pandas
       :sync: pandas
 
       .. autofunction:: dfguard.pandas.dataset._make_dataset
 
-      **Available methods:** ``assign``, ``drop``, ``rename``, ``select``,
-      ``filter``, ``query``, ``merge``, ``join``, ``groupby``, ``sort_values``,
-      ``drop_duplicates``, ``reset_index``, ``set_index``
+      **Tracked methods:** ``assign``, ``rename``, ``drop``, ``select``, ``astype``,
+      ``filter``, ``query``, ``head``, ``tail``, ``sample``, ``drop_duplicates``,
+      ``sort_values``, ``reset_index``, ``merge``, ``join``, ``groupby``, ``melt``,
+      ``pivot_table``, ``explode``, ``agg``, ``sum``, ``mean``, ``count``, ``min``,
+      ``max``, ``first``
 
    .. tab-item:: Polars
       :sync: polars
@@ -35,8 +46,8 @@ an updated history entry.
 
       .. autofunction:: dfguard.polars.dataset.dataset
 
-      **Available methods:** ``with_columns``, ``drop``, ``rename``, ``select``,
-      ``filter``, ``sort``, ``unique``, ``join``, ``group_by``
+      **Tracked methods:** ``with_columns``, ``rename``, ``drop``, ``select``,
+      ``filter``, ``sort``, ``unique``, ``join``, ``group_by``, ``agg``
 
 schema_history
 --------------
