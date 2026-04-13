@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/nitrajen/dfguard/compare/v0.2.1...v0.2.2) (2026-04-13)
+
+
+### Documentation
+
+* add full multi-backend tab-sets to quickstart and homepage ([9ae3195](https://github.com/nitrajen/dfguard/commit/9ae3195f0bca37f44e20bc664087a8b608dc0e1f))
+* multi-backend quickstart and homepage improvements ([9c89f76](https://github.com/nitrajen/dfguard/commit/9c89f7684ff70621bf22e24f9d2baf860b9d1b01))
+
 ## [0.2.1](https://github.com/nitrajen/dfguard/compare/v0.2.0...v0.2.1) (2026-04-13)
 
 
