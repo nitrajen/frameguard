@@ -145,7 +145,8 @@ def test_assert_valid_raises_on_mismatch(order_df):
     assert "revenue" in str(exc_info.value)
 
 
-# ── empty ─────────────────────────────────────────────────────────────────────
+
+# ── empty and astype construction ─────────────────────────────────────────────
 
 def test_empty_creates_zero_row_dataframe():
     df = OrderSchema.empty()
@@ -153,6 +154,7 @@ def test_empty_creates_zero_row_dataframe():
     assert len(df) == 0
     assert list(df.columns) == ["order_id", "amount", "quantity"]
     assert df["order_id"].dtype == np.dtype("int64")
+
 
 
 # ── to_code ───────────────────────────────────────────────────────────────────
