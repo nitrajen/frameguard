@@ -98,7 +98,6 @@ Compatibility
              order_id = np.dtype("int64")
              amount   = np.dtype("float64")
              quantity = np.dtype("int64")
-             label    = pd.StringDtype()         # nullable pandas string
 
          def enrich(df: RawSchema):              # enforced by arm()
              return df.assign(revenue=df["amount"] * df["quantity"])

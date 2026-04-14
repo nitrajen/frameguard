@@ -86,8 +86,6 @@ Assign in PascalCase. It is a type, not a value.
          RawSchema      = dfg.schema_of(raw_df)       # exact snapshot
          EnrichedSchema = dfg.schema_of(enriched_df)  # new type after adding revenue column
 
-By default (``subset=True``) extra columns are fine. Use ``subset=False`` for exact matching.
-
 Upfront declaration
 ~~~~~~~~~~~~~~~~~~~~
 
