@@ -1,6 +1,9 @@
 dfguard
 ==========
 
+The lightest way to enforce DataFrame schema checks in Python, using type
+annotations. Supports pandas, Polars, and PySpark.
+
 Data pipelines fail late. A DataFrame with the wrong schema enters a function
 without complaint, the job runs, and the crash surfaces somewhere downstream
 with an error that tells you nothing about where the mismatch started.

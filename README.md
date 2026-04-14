@@ -17,6 +17,8 @@
 
 ---
 
+The lightest way to enforce DataFrame schema checks in Python, using type annotations. Supports pandas, Polars, and PySpark.
+
 Data pipelines fail late. A DataFrame with the wrong schema enters a function without complaint, the job runs, and the crash surfaces somewhere downstream with an error that tells you nothing about where the mismatch started.
 
 **dfguard moves that failure to the function call.** Enforcement is pure metadata inspection: no data scanned, no Spark jobs triggered. Unlike [pandera](https://pandera.readthedocs.io/en/stable/), which introduces its own type system, or [Great Expectations](https://greatexpectations.io/), which scans actual data and requires significant setup, dfguard uses the types your library already ships with, such as `T.LongType()` for PySpark, `pl.Int64` for Polars, or `np.dtype("int64")` for pandas.
