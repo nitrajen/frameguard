@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.7](https://github.com/nitrajen/dfguard/compare/v0.2.6...v0.2.7) (2026-04-14)
+
+
+### Bug Fixes
+
+* add line_items to raw_df in intro examples so nested type enforcement examples run correctly ([7da9504](https://github.com/nitrajen/dfguard/commit/7da9504a9521624d5ed355bfc615f42382604ee1))
+
+
+### Documentation
+
+* add nested types and subset flag to examples, fix opening paragraph, remove schema history ([eb19cf6](https://github.com/nitrajen/dfguard/commit/eb19cf6c063c72410eb6e89b9088b70b617e3c9f))
+* add opening value proposition line to README and homepage ([6b92b8c](https://github.com/nitrajen/dfguard/commit/6b92b8c8bddeeeb70ed88475d35c42a8598b2c5c))
+* fix broken pandas example (label field), remove misplaced subset note after schema_of ([ea71833](https://github.com/nitrajen/dfguard/commit/ea718330478413f93a9199165c61cb110febd99c))
+* fix opening sentence after removing pipeline failure line ([09406ca](https://github.com/nitrajen/dfguard/commit/09406ca8f4609f7608735e053380446c03c39e2f))
+* fix subset note in quickstart, remove schema history section ([123b404](https://github.com/nitrajen/dfguard/commit/123b404ad1cecc4ecb8ebf3091997fb5f6e4befd))
+* readme and homepage improvements ([4b70417](https://github.com/nitrajen/dfguard/commit/4b70417719a2abc733a19f92277b661ad5a9a1f8))
+* remove redundant pipeline failure sentence ([c6eabac](https://github.com/nitrajen/dfguard/commit/c6eabac91a1776355fa2058d631bae9dc191553d))
+* update tagline to be specific and verifiable ([09c6843](https://github.com/nitrajen/dfguard/commit/09c684370c4bbdc6d52f698077840b2d01e3ca25))
+* update tagline, opening paragraph, add GE mention, subset=False in intro examples ([fb1d32f](https://github.com/nitrajen/dfguard/commit/fb1d32fb471cf8477c6e4bc0c9887fedf87fcb50))
+
 ## [0.2.6](https://github.com/nitrajen/dfguard/compare/v0.2.5...v0.2.6) (2026-04-13)
 
 
