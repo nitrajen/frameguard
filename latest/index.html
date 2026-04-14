@@ -247,17 +247,22 @@
         <article role="main" id="furo-main-content">
           <section id="dfguard">
 <h1>dfguard<a class="headerlink" href="#dfguard" title="Link to this heading">¶</a></h1>
-<p>Data pipelines fail late. A DataFrame with the wrong schema enters a function
-without complaint, the job runs, and the crash surfaces somewhere downstream
-with an error that tells you nothing about where the mismatch started.</p>
-<p><strong>dfguard moves that failure to the function call.</strong> The wrong DataFrame is
-rejected immediately with a precise error: which function, which argument, what
-schema was expected, what arrived. <strong>Lightweight</strong>: enforcement is pure metadata
-inspection: dfguard reads the schema struct from your DataFrame, no data is
-scanned, no Spark jobs are triggered. Unlike <a class="reference external" href="https://pandera.readthedocs.io/en/stable/">pandera</a>, which introduces its own
-type system, dfguard uses the types your library already ships with:
-<code class="docutils literal notranslate"><span class="pre">T.LongType()</span></code> for PySpark, <code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code> for Polars, <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;int64&quot;)</span></code>
-for pandas.</p>
+<p>The lightest way to enforce DataFrame schema checks in Python, using type
+annotations. Supports pandas, Polars, and PySpark.</p>
+<p><strong>dfguard rejects the wrong DataFrame at the function call</strong> with a precise error:
+which function, which argument, what schema was expected, what arrived.
+Enforcement is pure metadata inspection: no data scanned, no Spark jobs triggered. Unlike
+<a class="reference external" href="https://pandera.readthedocs.io/en/stable/">pandera</a>, which introduces its own
+type system, or <a class="reference external" href="https://greatexpectations.io/">Great Expectations</a>, which scans
+actual data and requires significant setup, dfguard uses the types your library
+already ships with, such as <code class="docutils literal notranslate"><span class="pre">T.LongType()</span></code> for PySpark, <code class="docutils literal notranslate"><span class="pre">pl.Int64</span></code> for Polars,
+or <code class="docutils literal notranslate"><span class="pre">np.dtype(&quot;int64&quot;)</span></code> for pandas.</p>
+<p>Explicitly calling validation at every stage peppers your codebase with boilerplate.
+Place one <code class="docutils literal notranslate"><span class="pre">dfg.arm()</span></code> call in your package entry point and every function with a
+schema-annotated DataFrame argument is enforced automatically. Use <code class="docutils literal notranslate"><span class="pre">&#64;dfg.enforce</span></code>
+on individual functions for explicit per-function control. By default, declared
+columns must be present with correct types and extra columns are fine. Pass
+<code class="docutils literal notranslate"><span class="pre">subset=False</span></code> to require an exact match.</p>
 <section id="compatibility">
 <h2>Compatibility<a class="headerlink" href="#compatibility" title="Link to this heading">¶</a></h2>
 <div class="table-wrapper colwidths-given docutils container">
@@ -318,7 +323,7 @@ PySpark</label><div class="sd-tab-content docutils">
 <span class="c1"># captures schema of the returned DataFrame</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
 
-<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                                          <span class="c1"># subset=True by default</span>
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>                            <span class="c1"># exact match: no extra columns allowed</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_vip&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
 
@@ -349,7 +354,6 @@ pandas</label><div class="sd-tab-content docutils">
     <span class="n">order_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
     <span class="n">amount</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">)</span>
     <span class="n">quantity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s2">&quot;int64&quot;</span><span class="p">)</span>
-    <span class="n">label</span>    <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">StringDtype</span><span class="p">()</span>         <span class="c1"># nullable pandas string</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">enrich</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">RawSchema</span><span class="p">):</span>              <span class="c1"># enforced by arm()</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">revenue</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;amount&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>
@@ -357,7 +361,7 @@ pandas</label><div class="sd-tab-content docutils">
 <span class="c1"># captures schema of the returned DataFrame</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
 
-<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                            <span class="c1"># subset=True by default</span>
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>              <span class="c1"># exact match: no extra columns allowed</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;revenue&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
 
@@ -394,7 +398,7 @@ Polars</label><div class="sd-tab-content docutils">
 <span class="c1"># captures schema of the returned DataFrame</span>
 <span class="n">EnrichedSchema</span> <span class="o">=</span> <span class="n">dfg</span><span class="o">.</span><span class="n">schema_of</span><span class="p">(</span><span class="n">enrich</span><span class="p">(</span><span class="n">raw_df</span><span class="p">))</span>
 
-<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span>                                  <span class="c1"># subset=True by default</span>
+<span class="nd">@dfg</span><span class="o">.</span><span class="n">enforce</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>                    <span class="c1"># exact match: no extra columns allowed</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">flag_high_value</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">EnrichedSchema</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">with_columns</span><span class="p">(</span><span class="n">is_vip</span><span class="o">=</span><span class="n">pl</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;revenue&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1000</span><span class="p">)</span>
 
