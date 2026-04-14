@@ -55,19 +55,26 @@ import dfguard.pyspark as dfg
 from pyspark.sql import SparkSession, functions as F, types as T
 
 spark = SparkSession.builder.getOrCreate()
+
+item_type = T.ArrayType(T.StructType([
+    T.StructField("sku",   T.StringType()),
+    T.StructField("price", T.DoubleType()),
+]))
 raw_df = spark.createDataFrame(
-    [(1, 10.0, 3), (2, 5.0, 7)],
-    "order_id LONG, amount DOUBLE, quantity INT",
+    [(1, 10.0, 3, [("SKU-1", 9.99)]), (2, 5.0, 7, [("SKU-2", 4.99)])],
+    T.StructType([
+        T.StructField("order_id",   T.LongType()),
+        T.StructField("amount",     T.DoubleType()),
+        T.StructField("quantity",   T.IntegerType()),
+        T.StructField("line_items", item_type),
+    ]),
 )
 
 class RawSchema(dfg.SparkSchema):
     order_id   = T.LongType()
     amount     = T.DoubleType()
     quantity   = T.IntegerType()
-    line_items = T.ArrayType(T.StructType([
-        T.StructField("sku",   T.StringType()),
-        T.StructField("price", T.DoubleType()),
-    ]))
+    line_items = item_type
 
 @dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema):
@@ -81,8 +88,8 @@ def flag_high_value(df: EnrichedSchema):
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:bigint, amount:double, quantity:int, revenue:double
-#   received: order_id:bigint, amount:double, quantity:int
+#   expected: order_id:bigint, amount:double, quantity:int, line_items:array<struct<sku:string,price:double>>, revenue:double
+#   received: order_id:bigint, amount:double, quantity:int, line_items:array<struct<sku:string,price:double>>
 ```
 
 **pandas**
@@ -90,24 +97,28 @@ flag_high_value(raw_df)
 ```python
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import dfguard.pandas as dfg
 
+item_dtype = pd.ArrowDtype(pa.list_(pa.struct([
+    pa.field("sku",   pa.string()),
+    pa.field("price", pa.float64()),
+])))
 raw_df = pd.DataFrame({
-    "order_id": pd.array([1, 2, 3], dtype="int64"),
-    "amount":   pd.array([10.0, 5.0, 8.5], dtype="float64"),
-    "quantity": pd.array([3, 1, 2], dtype="int64"),
+    "order_id":   pd.array([1, 2, 3], dtype="int64"),
+    "amount":     pd.array([10.0, 5.0, 8.5], dtype="float64"),
+    "quantity":   pd.array([3, 1, 2], dtype="int64"),
+    "line_items": pd.array(
+        [[{"sku": "SKU-1", "price": 9.99}], [{"sku": "SKU-2", "price": 4.99}], [{"sku": "SKU-3", "price": 7.99}]],
+        dtype=item_dtype,
+    ),
 })
-
-import pyarrow as pa
 
 class RawSchema(dfg.PandasSchema):
     order_id   = np.dtype("int64")
     amount     = np.dtype("float64")
     quantity   = np.dtype("int64")
-    line_items = pd.ArrowDtype(pa.list_(pa.struct([
-        pa.field("sku",   pa.string()),
-        pa.field("price", pa.float64()),
-    ])))
+    line_items = item_dtype
 
 @dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema):
@@ -121,8 +132,8 @@ def flag_high_value(df: EnrichedSchema):
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:int64, amount:float64, quantity:int64, revenue:float64
-#   received: order_id:int64, amount:float64, quantity:int64
+#   expected: order_id:int64, amount:float64, quantity:int64, line_items:list<item: struct<sku: string, price: double>>[pyarrow], revenue:float64
+#   received: order_id:int64, amount:float64, quantity:int64, line_items:list<item: struct<sku: string, price: double>>[pyarrow]
 ```
 
 **Polars**
@@ -131,20 +142,20 @@ flag_high_value(raw_df)
 import polars as pl
 import dfguard.polars as dfg
 
-raw_df = pl.DataFrame({
-    "order_id": pl.Series([1, 2, 3], dtype=pl.Int64),
-    "amount":   pl.Series([10.0, 5.0, 8.5], dtype=pl.Float64),
-    "quantity": pl.Series([3, 1, 2], dtype=pl.Int32),
-})
+item_type = pl.List(pl.Struct({"sku": pl.String, "price": pl.Float64}))
+raw_df = pl.DataFrame(
+    [
+        {"order_id": 1, "amount": 10.0, "quantity": 3, "line_items": [{"sku": "SKU-1", "price": 9.99}]},
+        {"order_id": 2, "amount": 5.0,  "quantity": 7, "line_items": [{"sku": "SKU-2", "price": 4.99}]},
+    ],
+    schema={"order_id": pl.Int64, "amount": pl.Float64, "quantity": pl.Int32, "line_items": item_type},
+)
 
 class RawSchema(dfg.PolarsSchema):
     order_id   = pl.Int64
     amount     = pl.Float64
     quantity   = pl.Int32
-    line_items = pl.List(pl.Struct({
-        "sku":   pl.String,
-        "price": pl.Float64,
-    }))
+    line_items = item_type
 
 @dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema) -> pl.DataFrame:
@@ -158,8 +169,8 @@ def flag_high_value(df: EnrichedSchema) -> pl.DataFrame:
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:Int64, amount:Float64, quantity:Int32, revenue:Float64
-#   received: order_id:Int64, amount:Float64, quantity:Int32
+#   expected: order_id:Int64, amount:Float64, quantity:Int32, line_items:List(Struct({'sku': String, 'price': Float64})), revenue:Float64
+#   received: order_id:Int64, amount:Float64, quantity:Int32, line_items:List(Struct({'sku': String, 'price': Float64}))
 ```
 
 <!-- tabs-end -->
