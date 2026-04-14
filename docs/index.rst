@@ -1,18 +1,24 @@
 dfguard
 ==========
 
-Data pipelines fail late. A DataFrame with the wrong schema enters a function
-without complaint, the job runs, and the crash surfaces somewhere downstream
-with an error that tells you nothing about where the mismatch started.
+The lightest way to enforce DataFrame schema checks in Python, using type
+annotations. Supports pandas, Polars, and PySpark.
 
-**dfguard moves that failure to the function call.** The wrong DataFrame is
-rejected immediately with a precise error: which function, which argument, what
-schema was expected, what arrived. **Lightweight**: enforcement is pure metadata
-inspection: dfguard reads the schema struct from your DataFrame, no data is
-scanned, no Spark jobs are triggered. Unlike `pandera <https://pandera.readthedocs.io/en/stable/>`_, which introduces its own
-type system, dfguard uses the types your library already ships with:
-``T.LongType()`` for PySpark, ``pl.Int64`` for Polars, ``np.dtype("int64")``
-for pandas.
+**dfguard rejects the wrong DataFrame at the function call** with a precise error:
+which function, which argument, what schema was expected, what arrived.
+Enforcement is pure metadata inspection: no data scanned, no Spark jobs triggered. Unlike
+`pandera <https://pandera.readthedocs.io/en/stable/>`_, which introduces its own
+type system, or `Great Expectations <https://greatexpectations.io/>`_, which scans
+actual data and requires significant setup, dfguard uses the types your library
+already ships with, such as ``T.LongType()`` for PySpark, ``pl.Int64`` for Polars,
+or ``np.dtype("int64")`` for pandas.
+
+Explicitly calling validation at every stage peppers your codebase with boilerplate.
+Place one ``dfg.arm()`` call in your package entry point and every function with a
+schema-annotated DataFrame argument is enforced automatically. Use ``@dfg.enforce``
+on individual functions for explicit per-function control. By default, declared
+columns must be present with correct types and extra columns are fine. Pass
+``subset=False`` to require an exact match.
 
 Compatibility
 -------------
@@ -67,7 +73,7 @@ Compatibility
          # captures schema of the returned DataFrame
          EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-         @dfg.enforce                                          # subset=True by default
+         @dfg.enforce(subset=False)                            # exact match: no extra columns allowed
          def flag_high_value(df: EnrichedSchema):
              return df.withColumn("is_vip", F.col("revenue") > 1000)
 
@@ -98,7 +104,6 @@ Compatibility
              order_id = np.dtype("int64")
              amount   = np.dtype("float64")
              quantity = np.dtype("int64")
-             label    = pd.StringDtype()         # nullable pandas string
 
          def enrich(df: RawSchema):              # enforced by arm()
              return df.assign(revenue=df["amount"] * df["quantity"])
@@ -106,7 +111,7 @@ Compatibility
          # captures schema of the returned DataFrame
          EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-         @dfg.enforce                            # subset=True by default
+         @dfg.enforce(subset=False)              # exact match: no extra columns allowed
          def flag_high_value(df: EnrichedSchema):
              return df.assign(is_vip=df["revenue"] > 1000)
 
@@ -143,7 +148,7 @@ Compatibility
          # captures schema of the returned DataFrame
          EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-         @dfg.enforce                                  # subset=True by default
+         @dfg.enforce(subset=False)                    # exact match: no extra columns allowed
          def flag_high_value(df: EnrichedSchema) -> pl.DataFrame:
              return df.with_columns(is_vip=pl.col("revenue") > 1000)
 

@@ -2,7 +2,7 @@
 
 # dfguard
 
-**Catch DataFrame schema mismatches at the function call, not deep in your pipeline.**
+**Lightweight runtime schema enforcement for Python DataFrames, using the types you already know.**
 
 [![PyPI](https://img.shields.io/pypi/v/dfguard?color=blue&label=PyPI)](https://pypi.org/project/dfguard/)
 [![Python](https://img.shields.io/pypi/pyversions/dfguard)](https://pypi.org/project/dfguard/)
@@ -17,9 +17,11 @@
 
 ---
 
-Data pipelines fail late. A DataFrame with the wrong schema enters a function without complaint, the job runs, and the crash surfaces somewhere downstream with an error that tells you nothing about where the mismatch started.
+The lightest way to enforce DataFrame schema checks in Python, using type annotations. Supports pandas, Polars, and PySpark.
 
-**dfguard moves that failure to the function call.** The wrong DataFrame is rejected immediately with a precise error: which function, which argument, what schema was expected, what arrived. **Lightweight**: enforcement is pure metadata inspection — dfguard reads the schema struct from your DataFrame, no data is scanned, no Spark jobs triggered. Unlike [pandera](https://pandera.readthedocs.io/en/stable/), which introduces its own type system, dfguard uses the types your library already ships with: `T.LongType()` for PySpark, `pl.Int64` for Polars, `np.dtype("int64")` for pandas.
+**dfguard rejects the wrong DataFrame at the function call** with a precise error: which function, which argument, what schema was expected, what arrived. Enforcement is pure metadata inspection: no data scanned, no Spark jobs triggered. Unlike [pandera](https://pandera.readthedocs.io/en/stable/), which introduces its own type system, or [Great Expectations](https://greatexpectations.io/), which scans actual data and requires significant setup, dfguard uses the types your library already ships with, such as `T.LongType()` for PySpark, `pl.Int64` for Polars, or `np.dtype("int64")` for pandas.
+
+Explicitly calling validation at every stage peppers your codebase with boilerplate. Place one `dfg.arm()` call in your package entry point and every function with a schema-annotated DataFrame argument is enforced automatically. Use `@dfg.enforce` on individual functions for explicit per-function control. By default, declared columns must be present with correct types and extra columns are fine. Pass `subset=False` to require an exact match.
 
 ## Compatibility
 
@@ -51,30 +53,41 @@ import dfguard.pyspark as dfg
 from pyspark.sql import SparkSession, functions as F, types as T
 
 spark = SparkSession.builder.getOrCreate()
+
+item_type = T.ArrayType(T.StructType([
+    T.StructField("sku",   T.StringType()),
+    T.StructField("price", T.DoubleType()),
+]))
 raw_df = spark.createDataFrame(
-    [(1, 10.0, 3), (2, 5.0, 7)],
-    "order_id LONG, amount DOUBLE, quantity INT",
+    [(1, 10.0, 3, [("SKU-1", 9.99)]), (2, 5.0, 7, [("SKU-2", 4.99)])],
+    T.StructType([
+        T.StructField("order_id",   T.LongType()),
+        T.StructField("amount",     T.DoubleType()),
+        T.StructField("quantity",   T.IntegerType()),
+        T.StructField("line_items", item_type),
+    ]),
 )
 
 class RawSchema(dfg.SparkSchema):
-    order_id = T.LongType()
-    amount   = T.DoubleType()
-    quantity = T.IntegerType()
+    order_id   = T.LongType()
+    amount     = T.DoubleType()
+    quantity   = T.IntegerType()
+    line_items = item_type
 
-@dfg.enforce
+@dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema):
     return df.withColumn("revenue", F.col("amount") * F.col("quantity"))
 
 EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-@dfg.enforce
+@dfg.enforce(subset=False)     # exact match: no extra columns allowed
 def flag_high_value(df: EnrichedSchema):
     return df.withColumn("is_vip", F.col("revenue") > 1000)
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:bigint, amount:double, quantity:int, revenue:double
-#   received: order_id:bigint, amount:double, quantity:int
+#   expected: order_id:bigint, amount:double, quantity:int, line_items:array<struct<sku:string,price:double>>, revenue:double
+#   received: order_id:bigint, amount:double, quantity:int, line_items:array<struct<sku:string,price:double>>
 ```
 
 **pandas**
@@ -82,33 +95,43 @@ flag_high_value(raw_df)
 ```python
 import numpy as np
 import pandas as pd
+import pyarrow as pa
 import dfguard.pandas as dfg
 
+item_dtype = pd.ArrowDtype(pa.list_(pa.struct([
+    pa.field("sku",   pa.string()),
+    pa.field("price", pa.float64()),
+])))
 raw_df = pd.DataFrame({
-    "order_id": pd.array([1, 2, 3], dtype="int64"),
-    "amount":   pd.array([10.0, 5.0, 8.5], dtype="float64"),
-    "quantity": pd.array([3, 1, 2], dtype="int64"),
+    "order_id":   pd.array([1, 2, 3], dtype="int64"),
+    "amount":     pd.array([10.0, 5.0, 8.5], dtype="float64"),
+    "quantity":   pd.array([3, 1, 2], dtype="int64"),
+    "line_items": pd.array(
+        [[{"sku": "SKU-1", "price": 9.99}], [{"sku": "SKU-2", "price": 4.99}], [{"sku": "SKU-3", "price": 7.99}]],
+        dtype=item_dtype,
+    ),
 })
 
 class RawSchema(dfg.PandasSchema):
-    order_id = np.dtype("int64")
-    amount   = np.dtype("float64")
-    quantity = np.dtype("int64")
+    order_id   = np.dtype("int64")
+    amount     = np.dtype("float64")
+    quantity   = np.dtype("int64")
+    line_items = item_dtype
 
-@dfg.enforce
+@dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema):
     return df.assign(revenue=df["amount"] * df["quantity"])
 
 EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-@dfg.enforce
+@dfg.enforce(subset=False)     # exact match: no extra columns allowed
 def flag_high_value(df: EnrichedSchema):
     return df.assign(is_vip=df["revenue"] > 1000)
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:int64, amount:float64, quantity:int64, revenue:float64
-#   received: order_id:int64, amount:float64, quantity:int64
+#   expected: order_id:int64, amount:float64, quantity:int64, line_items:list<item: struct<sku: string, price: double>>[pyarrow], revenue:float64
+#   received: order_id:int64, amount:float64, quantity:int64, line_items:list<item: struct<sku: string, price: double>>[pyarrow]
 ```
 
 **Polars**
@@ -117,31 +140,35 @@ flag_high_value(raw_df)
 import polars as pl
 import dfguard.polars as dfg
 
-raw_df = pl.DataFrame({
-    "order_id": pl.Series([1, 2, 3], dtype=pl.Int64),
-    "amount":   pl.Series([10.0, 5.0, 8.5], dtype=pl.Float64),
-    "quantity": pl.Series([3, 1, 2], dtype=pl.Int32),
-})
+item_type = pl.List(pl.Struct({"sku": pl.String, "price": pl.Float64}))
+raw_df = pl.DataFrame(
+    [
+        {"order_id": 1, "amount": 10.0, "quantity": 3, "line_items": [{"sku": "SKU-1", "price": 9.99}]},
+        {"order_id": 2, "amount": 5.0,  "quantity": 7, "line_items": [{"sku": "SKU-2", "price": 4.99}]},
+    ],
+    schema={"order_id": pl.Int64, "amount": pl.Float64, "quantity": pl.Int32, "line_items": item_type},
+)
 
 class RawSchema(dfg.PolarsSchema):
-    order_id = pl.Int64
-    amount   = pl.Float64
-    quantity = pl.Int32
+    order_id   = pl.Int64
+    amount     = pl.Float64
+    quantity   = pl.Int32
+    line_items = item_type
 
-@dfg.enforce
+@dfg.enforce                   # subset=True by default: extra columns are fine
 def enrich(df: RawSchema) -> pl.DataFrame:
     return df.with_columns(revenue=pl.col("amount") * pl.col("quantity"))
 
 EnrichedSchema = dfg.schema_of(enrich(raw_df))
 
-@dfg.enforce
+@dfg.enforce(subset=False)     # exact match: no extra columns allowed
 def flag_high_value(df: EnrichedSchema) -> pl.DataFrame:
     return df.with_columns(is_vip=pl.col("revenue") > 1000)
 
 flag_high_value(raw_df)
 # TypeError: Schema mismatch in flag_high_value() argument 'df':
-#   expected: order_id:Int64, amount:Float64, quantity:Int32, revenue:Float64
-#   received: order_id:Int64, amount:Float64, quantity:Int32
+#   expected: order_id:Int64, amount:Float64, quantity:Int32, line_items:List(Struct({'sku': String, 'price': Float64})), revenue:Float64
+#   received: order_id:Int64, amount:Float64, quantity:Int32, line_items:List(Struct({'sku': String, 'price': Float64}))
 ```
 
 <!-- tabs-end -->
@@ -161,7 +188,7 @@ RawSchema      = dfg.schema_of(raw_df)       # exact snapshot of this stage
 EnrichedSchema = dfg.schema_of(enriched_df)  # new type after adding columns
 ```
 
-Exact matching: a DataFrame with extra columns does **not** satisfy `RawSchema`. Capture a new type at each stage boundary.
+By default (`subset=True`) extra columns are fine. Use `subset=False` for exact matching. See the [subset flag](#the-subset-flag) section.
 
 ### Declare upfront
 
@@ -302,35 +329,6 @@ SchemaValidationError: Schema validation failed:
 
 ---
 
-## Schema history
-
-`dfg.dataset(df)` records every schema-changing operation. Call `.schema_history.print()` to see the full evolution:
-
-```python
-ds = dfg.dataset(raw_df)
-ds = ds.withColumn("revenue",  F.col("amount") * 1.1)
-ds = ds.withColumn("discount", F.when(F.col("revenue") > 500, 50.0).otherwise(0.0))
-ds = ds.drop("tags")
-ds = ds.withColumnRenamed("customer", "customer_name")
-
-ds.schema_history.print()
-# ────────────────────────────────────────────────────────────
-# Schema Evolution
-# ────────────────────────────────────────────────────────────
-#   [ 0] input
-#        struct<order_id:bigint,customer:string,amount:double,...>  (no schema change)
-#   [ 1] withColumn('revenue')
-#        added: revenue:double
-#   [ 2] withColumn('discount')
-#        added: discount:double
-#   [ 3] drop(['tags'])
-#        dropped: tags
-#   [ 4] withColumnRenamed('customer'→'customer_name')
-#        added: customer_name:string | dropped: customer
-# ────────────────────────────────────────────────────────────
-```
-
----
 
 ## Pipeline integrations
 
@@ -345,9 +343,9 @@ dfguard fits naturally into pipeline frameworks. See the full docs for working e
 
 **[nitrajen.github.io/dfguard](https://nitrajen.github.io/dfguard/)**
 
-- [Quickstart](https://nitrajen.github.io/dfguard/quickstart.html): nested structs, multi-stage pipelines, subset flag, schema history
+- [Quickstart](https://nitrajen.github.io/dfguard/quickstart.html): nested structs, multi-stage pipelines, subset flag
 - [Types](https://nitrajen.github.io/dfguard/types.html): full type coverage per backend, including PyArrow for nested pandas types
-- [API reference](https://nitrajen.github.io/dfguard/api/index.html): `arm`, `disarm`, `enforce`, `schema_of`, `SparkSchema`/`PandasSchema`/`PolarsSchema`, `dataset`
+- [API reference](https://nitrajen.github.io/dfguard/api/index.html): `arm`, `disarm`, `enforce`, `schema_of`, `SparkSchema`/`PandasSchema`/`PolarsSchema`
 - [Airflow integration](https://nitrajen.github.io/dfguard/airflow.html)
 - [Kedro integration](https://nitrajen.github.io/dfguard/kedro.html)
 
