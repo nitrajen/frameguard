@@ -86,8 +86,7 @@ Assign in PascalCase. It is a type, not a value.
          RawSchema      = dfg.schema_of(raw_df)       # exact snapshot
          EnrichedSchema = dfg.schema_of(enriched_df)  # new type after adding revenue column
 
-The isinstance check is **exact**: a DataFrame with extra columns does *not*
-satisfy ``RawSchema``. Capture a new type at each stage boundary.
+By default (``subset=True``) extra columns are fine. Use ``subset=False`` for exact matching.
 
 Upfront declaration
 ~~~~~~~~~~~~~~~~~~~~
@@ -807,118 +806,6 @@ of how it was armed or decorated.
 
 This is useful in tests where you want to exercise transformation logic without
 providing schema-valid fixtures.
-
-Schema history
---------------
-
-``dfg.dataset(df)`` wraps a DataFrame and records every schema-changing operation.
-When ``validate()`` fails, the error includes the full history.
-
-.. tab-set::
-
-   .. tab-item:: PySpark
-      :sync: pyspark
-
-      .. code-block:: python
-
-         import dfguard.pyspark as dfg
-         from pyspark.sql import SparkSession, functions as F
-
-         spark = SparkSession.builder.getOrCreate()
-         raw_df = spark.createDataFrame(
-             [(1, "Alice", 10.0, ["vip"], "home")],
-             "order_id LONG, customer STRING, amount DOUBLE, tags ARRAY<STRING>, address STRING",
-         )
-
-         ds = dfg.dataset(raw_df)
-         ds = ds.withColumn("revenue",  F.col("amount") * 1.1)
-         ds = ds.withColumn("discount", F.when(F.col("revenue") > 500, 50.0).otherwise(0.0))
-         ds = ds.drop("tags", "address")
-         ds = ds.withColumnRenamed("customer", "customer_name")
-
-         ds.schema_history.print()
-         # ────────────────────────────────────────────────────────────
-         # Schema Evolution
-         # ────────────────────────────────────────────────────────────
-         #   [ 0] input
-         #        struct<order_id:bigint,customer:string,amount:double,...>  (no schema change)
-         #   [ 1] withColumn('revenue')
-         #        added: revenue:double
-         #   [ 2] withColumn('discount')
-         #        added: discount:double
-         #   [ 3] drop(['tags', 'address'])
-         #        dropped: tags, address
-         #   [ 4] withColumnRenamed('customer'→'customer_name')
-         #        added: customer_name:string | dropped: customer
-         # ────────────────────────────────────────────────────────────
-
-   .. tab-item:: pandas
-      :sync: pandas
-
-      .. code-block:: python
-
-         import numpy as np
-         import pandas as pd
-         import dfguard.pandas as dfg
-
-         raw_df = pd.DataFrame({
-             "order_id":  pd.array([1], dtype="int64"),
-             "customer":  pd.array(["Alice"], dtype=object),
-             "amount":    pd.array([10.0], dtype="float64"),
-         })
-
-         ds = dfg.dataset(raw_df)
-         ds = ds.assign(revenue=ds["amount"] * 1.1)
-         ds = ds.assign(discount=ds["revenue"].where(ds["revenue"] <= 500, 50.0))
-         ds = ds.rename(columns={"customer": "customer_name"})
-
-         ds.schema_history.print()
-         # ────────────────────────────────────────────────────────────
-         # Schema Evolution
-         # ────────────────────────────────────────────────────────────
-         #   [ 0] input
-         #        order_id:int64, customer:object, amount:float64  (no schema change)
-         #   [ 1] assign('revenue')
-         #        added: revenue:float64
-         #   [ 2] assign('discount')
-         #        added: discount:float64
-         #   [ 3] rename({'customer'→'customer_name'})
-         #        added: customer_name:object | dropped: customer
-         # ────────────────────────────────────────────────────────────
-
-   .. tab-item:: Polars
-      :sync: polars
-
-      .. code-block:: python
-
-         import polars as pl
-         import dfguard.polars as dfg
-
-         raw_df = pl.DataFrame({
-             "order_id":  pl.Series([1], dtype=pl.Int64),
-             "customer":  pl.Series(["Alice"], dtype=pl.String),
-             "amount":    pl.Series([10.0], dtype=pl.Float64),
-         })
-
-         ds = dfg.dataset(raw_df)
-         ds = ds.with_columns(revenue=pl.col("amount") * 1.1)
-         ds = ds.with_columns(discount=pl.when(pl.col("revenue") > 500).then(50.0).otherwise(0.0))
-         ds = ds.drop("customer")
-         ds = ds.rename({"customer": "customer_name"})
-
-         ds.schema_history.print()
-         # ────────────────────────────────────────────────────────────
-         # Schema Evolution
-         # ────────────────────────────────────────────────────────────
-         #   [ 0] input
-         #        order_id:Int64, customer:String, amount:Float64  (no schema change)
-         #   [ 1] with_columns('revenue')
-         #        added: revenue:Float64
-         #   [ 2] with_columns('discount')
-         #        added: discount:Float64
-         #   [ 3] drop(['customer'])
-         #        dropped: customer
-         # ────────────────────────────────────────────────────────────
 
 Schema utilities
 -----------------
